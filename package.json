@@ -23,7 +23,6 @@
     "email": "olivier@mg-crea.com"
   },
   "license": "MI",
-  "private": true,
   "dependencies": {
     "bluebird": "^3.1.1",
     "core-error-predicates": "^1.1.0",
