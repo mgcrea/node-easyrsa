@@ -13,7 +13,7 @@ Node.js implementation of the [EasyRSA](https://github.com/OpenVPN/easy-rsa) Ope
 - Available both as a cli and a lib.
 - Databases backends on the TODO-list.
 
-## quickstart
+## Quickstart
 
 - Command Line Interface
 
@@ -24,6 +24,17 @@ easyrsa gen-req EntityName
 easyrsa sign-req client EntityName
 ```
 
-## docs
+## Testing
+
+- You can quickly start hacking around
+
+```bash
+git clone -o github git@github.com:mgcrea/node-easyrsa.git
+cd node-easyrsa
+npm i
+npm start
+```
+
+## Docs
 
 - [EasyRSA quickstart](https://github.com/OpenVPN/easy-rsa/blob/master/README.quickstart.md)

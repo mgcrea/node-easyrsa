@@ -1,7 +1,7 @@
 
 import fs from 'fs';
 import chai from 'chai';
-import sinon from 'sinon';
+// import sinon from 'sinon';
 import path from 'path';
 const expect = chai.expect;
 import EasyRSA from './..';

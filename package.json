@@ -8,11 +8,13 @@
   },
   "scripts": {
     "build": "babel src/ -d lib/ -s",
-    "watch": "npm run build -- -w",
+    "build:watch": "npm run build -- -w",
     "test": "npm run test-eslint && npm run test-mocha",
     "test-eslint": "eslint src",
     "test-mocha": "mkdir .tmp; mocha lib/test",
-    "prepublish": "npm run build"
+    "test-mocha:watch": "npm run test-mocha -- -w",
+    "prepublish": "npm run build",
+    "start": "parallelshell 'npm run build:watch' 'npm run test-mocha:watch'"
   },
   "engines": {
     "node": "^4.2"
@@ -46,6 +48,7 @@
     "eslint": "^1.10.3",
     "eslint-config-airbnb": "^3.1.0",
     "mocha": "^2.3.4",
+    "parallelshell": "^2.0.0",
     "sinon": "^1.17.2"
   },
   "optionalDependencies": {

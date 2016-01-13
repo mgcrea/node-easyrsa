@@ -4,11 +4,9 @@ import fs from 'fs'; Promise.promisifyAll(fs);
 import path from 'path';
 import del from 'del';
 import {pick, defaults} from 'lodash';
-import forge, {pki, asn1, pem, md} from 'node-forge'; Promise.promisifyAll(pki.rsa);
-import crypto from 'crypto';
+import forge, {pki, md} from 'node-forge'; Promise.promisifyAll(pki.rsa);
 // import {FileSystemError} from 'core-error-predicates';
 const cwd = process.cwd();
-import log from './utils/log';
 import moment from 'moment';
 require('debug-utils');
 
@@ -94,7 +92,7 @@ export default class EasyRSA {
         const attrs = [{
           name: 'commonName',
           value: 'Easy-RSA CA'
-        }/*, {
+        }/* , {
           name: 'countryName',
           value: 'US'
         }, {
@@ -150,7 +148,7 @@ export default class EasyRSA {
         csr.setSubject([{
           name: 'commonName',
           value: commonName
-        }/*, {
+        }/* , {
           name: 'countryName',
           value: 'US'
         }, {
@@ -225,7 +223,7 @@ export default class EasyRSA {
         const attrs = [{
           name: 'commonName',
           value: 'Easy-RSA CA'
-        }/*, {
+        }/* , {
           name: 'countryName',
           value: 'US'
         }, {
@@ -297,10 +295,10 @@ function generateFastKeyPair(bits = 2048, exponent = 65537) {
   }
 }
 
-function prettyPrintCertificate(filePath) {
-  return fs.readFileAsync(filePath, 'utf8')
-    .then(contents => pem.decode(contents)[0])
-    .then(message => asn1.fromDer(message.body))
-    .then(object => asn1.prettyPrint(object))
-    .then(console.log.bind(console));
-}
+// function prettyPrintCertificate(filePath) {
+//   return fs.readFileAsync(filePath, 'utf8')
+//     .then(contents => pem.decode(contents)[0])
+//     .then(message => asn1.fromDer(message.body))
+//     .then(object => asn1.prettyPrint(object))
+//     .then(console.log.bind(console));
+// }
