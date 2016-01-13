@@ -1,0 +1,11 @@
+.DS_Store
+.tern-project
+*.log
+*.sublime-project
+*.sublime-workspace
+.idea/
+.tmp/
+node_modules/
+tmp/
+pki/
+src/
