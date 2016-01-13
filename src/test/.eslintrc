@@ -1,0 +1,22 @@
+{
+  "extends": "airbnb/base",
+  "parser": "babel-eslint",
+  "rules": {
+    "comma-dangle": [2, "never"],
+    "no-console": 0,
+    "object-curly-spacing": [2, "never"],
+    "no-unused-vars": [2, {"args": "none"}],
+    "no-use-before-define": [2, "nofunc"],
+    "id-length": 0,
+    "max-len": 0,
+    "no-unused-expressions": 0
+  },
+  "globals": {
+    "before": false,
+    "beforeEach": false,
+    "after": false,
+    "afterEach": false,
+    "describe": false,
+    "it": false
+  }
+}

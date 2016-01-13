@@ -21,10 +21,8 @@ export default class EasyRSA {
     days: 3650
   };
   constructor(argv) {
-    d(argv);
     this.config = defaults({}, pick(argv, ...Object.keys(EasyRSA.defaults)), EasyRSA.defaults);
     this.dir = this.config.pkiDir;
-    this.cmd = argv._;
   }
   _verifyPKI() {
     return fs.statAsync(this.dir).then(file => {
@@ -46,11 +44,12 @@ export default class EasyRSA {
   }
   initPKI({force = false} = {}) {
     const setupFolders = (dir) => {
-      return Promise.each([
-        fs.mkdirAsync(dir),
-        fs.mkdirAsync(path.join(dir, 'private')),
-        fs.mkdirAsync(path.join(dir, 'reqs'))
-      ]);
+      return fs.mkdirAsync(dir).then(() => {
+        return Promise.all([
+          fs.mkdirAsync(path.join(dir, 'private')),
+          fs.mkdirAsync(path.join(dir, 'reqs'))
+        ]);
+      });
     };
     return setupFolders(this.dir)
     // @TODO fix catch
@@ -71,7 +70,7 @@ export default class EasyRSA {
   // watch -n.75 'openssl x509 -in pki/ca.crt -text -noout'
   buildCA() {
     const setupFolders = (dir) => {
-      return Promise.each([
+      return Promise.all([
         fs.mkdirAsync(path.join(dir, 'issued')).catch(err => {}),
         fs.mkdirAsync(path.join(dir, 'certs_by_serial'))
       ]);
@@ -199,7 +198,10 @@ export default class EasyRSA {
         ]);
       });
   }
-  signReq(type, commonName) {
+  signReq(type = 'client', commonName) {
+    if (!commonName) {
+      throw new Error('Missing commonName');
+    }
     return this._verifyPKI()
       .then(this._loadCA.bind(this))
       .then(() => {

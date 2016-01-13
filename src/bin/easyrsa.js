@@ -64,7 +64,12 @@ switch (argv._[0]) {
     });
     break;
   case 'build-ca':
-    pki.buildCA();
+    pki.buildCA()
+    .then(() => {
+      log.info('init-pki complete; you may now create a CA or requests.');
+      log.info('Your newly created PKI dir is: %s', pki.dir);
+      process.exit(0);
+    });
     break;
   case 'gen-req':
     pki.genReq(...cmds);
