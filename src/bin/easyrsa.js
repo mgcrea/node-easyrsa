@@ -1,5 +1,4 @@
 #!/usr/bin/env node
-require('debug-utils');
 import yargs from 'yargs';
 import pkg from './../../package.json';
 import EasyRSA from './../../lib';
@@ -7,6 +6,7 @@ import Promise from 'bluebird';
 import {mapKeys, camelCase} from 'lodash';
 import inquirer from 'inquirer'; Promise.promisifyAll(inquirer);
 import log from './../utils/log';
+try { require('debug-utils'); } catch (err) {/**/}
 
 const argv = yargs
   .usage('Usage: $0 <command> [options]')
