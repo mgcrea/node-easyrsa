@@ -1,5 +1,8 @@
 #!/usr/bin/env node
 import yargs from 'yargs';
+import path from 'path';
+import chalk from 'chalk';
+import tildify from 'tildify';
 import pkg from './../../package.json';
 import EasyRSA from './../../lib';
 import Promise from 'bluebird';
@@ -27,7 +30,7 @@ const argv = yargs
   .command('gen-req', 'Generate a standalone keypair and request (CSR)', () => {
     yargs
       .usage('Usage: easyrsa gen-req <filename_base>')
-      .demand(2, 'Incorrect number of arguments provided')
+      .demand(2, 'Error: gen-req must have a file base as the first argument.')
       .option('nopass', {description: 'Do not encrypt the CA key', type: 'boolean'})
       .help('h').alias('h', 'help');
   })
@@ -59,23 +62,37 @@ switch (argv._[0]) {
     })
     .then(() => {
       log.info('init-pki complete; you may now create a CA or requests.');
-      log.info('Your newly created PKI dir is: %s', pki.dir);
+      log.info('Your newly created PKI dir is: %s', prettyPath(pki.dir));
       process.exit(0);
     });
     break;
   case 'build-ca':
     pki.buildCA()
     .then(() => {
-      log.info('init-pki complete; you may now create a CA or requests.');
-      log.info('Your newly created PKI dir is: %s', pki.dir);
+      log.info('build-ca complete; you may now import and sign certificate requests.');
+      log.info('Your new CA certificate file for publishing is: %s', prettyPath(path.join(pki.dir, 'ca.crt')));
       process.exit(0);
     });
     break;
   case 'gen-req':
-    pki.genReq(...cmds);
+    pki.genReq(...cmds)
+    .then(({commonName}) => {
+      log.info('gen-req complete; you may now sign the certificate request.');
+      log.info('Your new certificate request (CSR) file for signing is: %s', prettyPath(path.join(pki.dir, 'reqs', commonName + '.req')));
+      process.exit(0);
+    });
     break;
   case 'sign-req':
-    pki.signReq(...cmds);
+    pki.signReq(...cmds)
+    .then(({commonName}) => {
+      log.info('sign-req complete; you may now use the provided certificate.');
+      log.info('Your new certificate file is: %s', prettyPath(path.join(pki.dir, 'issued', commonName + '.crt')));
+      process.exit(0);
+    });
     break;
   default:
+}
+
+function prettyPath(filepPath) {
+  return chalk.magenta(tildify(filepPath));
 }

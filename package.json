@@ -30,6 +30,7 @@
   "license": "MI",
   "dependencies": {
     "bluebird": "^3.1.1",
+    "chalk": "^1.1.1",
     "core-error-predicates": "^1.1.0",
     "del": "^2.2.0",
     "inquirer": "^0.11.2",
@@ -37,6 +38,7 @@
     "moment": "^2.11.1",
     "node-forge": "^0.6.38",
     "source-map-support": "^0.4.0",
+    "tildify": "^1.1.2",
     "yargs": "^3.31.0"
   },
   "devDependencies": {

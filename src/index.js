@@ -188,7 +188,7 @@ export default class EasyRSA {
         //   }]
         // }]);
         csr.sign(privateKey, md.sha256.create());
-        return {privateKey, csr};
+        return {privateKey, csr, commonName};
       }).tap(({privateKey, csr}) => {
         return Promise.all([
           fs.writeFileAsync(path.join(this.dir, 'reqs', commonName + '.req'), pki.certificationRequestToPem(csr)),
@@ -270,7 +270,7 @@ export default class EasyRSA {
             throw new Error('Type not supported');
         }
         cert.sign(this._ca.privateKey, md.sha256.create());
-        return {cert, serial};
+        return {cert, serial, commonName};
       }).tap(({cert, serial}) => {
         const updatedSerial = (parseInt(serial, 16) + 1).toString(16);
         const certPem = pki.certificateToPem(cert);
