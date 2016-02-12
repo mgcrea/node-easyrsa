@@ -1,5 +1,5 @@
 {
-  "extends": "airbnb/mgcrea",
+  "extends": "mgcrea/base",
   "parser": "babel-eslint",
   "env": {
     "mocha": true
