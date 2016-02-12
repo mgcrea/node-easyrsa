@@ -8,7 +8,7 @@ import EasyRSA from './..';
 import {pki} from 'node-forge';
 
 const options = {
-  pkiDir: path.resolve(__dirname, '..', '..', '.tmp', 'pki')
+  pkiDir: path.resolve(__dirname, '..', '.tmp', 'pki')
 };
 
 describe('EasyRSA', () => {
@@ -16,7 +16,7 @@ describe('EasyRSA', () => {
     it('should properly merge options', () => {
       const easyrsa = new EasyRSA();
       expect(easyrsa.config).to.be.a('object');
-      expect(easyrsa.config.pkiDir).to.eql(path.resolve(__dirname, '..', '..', 'pki'));
+      expect(easyrsa.config.pkiDir).to.eql(path.resolve(__dirname, '..', 'pki'));
     });
   });
   describe('#initPKI()', () => {

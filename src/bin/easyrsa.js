@@ -78,7 +78,7 @@ switch (argv._[0]) {
     pki.genReq(...cmds)
     .then(({commonName}) => {
       log.info('gen-req complete; you may now sign the certificate request.');
-      log.info('Your new certificate request (CSR) file for signing is: %s', prettyPath(path.join(pki.dir, 'reqs', commonName + '.req')));
+      log.info('Your new certificate request (CSR) file for signing is: %s', prettyPath(path.join(pki.dir, 'reqs', `${commonName}.req`)));
       process.exit(0);
     });
     break;
@@ -86,7 +86,7 @@ switch (argv._[0]) {
     pki.signReq(...cmds)
     .then(({commonName}) => {
       log.info('sign-req complete; you may now use the provided certificate.');
-      log.info('Your new certificate file is: %s', prettyPath(path.join(pki.dir, 'issued', commonName + '.crt')));
+      log.info('Your new certificate file is: %s', prettyPath(path.join(pki.dir, 'issued', `${commonName}.crt`)));
       process.exit(0);
     });
     break;

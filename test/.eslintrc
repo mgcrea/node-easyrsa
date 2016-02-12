@@ -3,5 +3,8 @@
   "parser": "babel-eslint",
   "env": {
     "mocha": true
+  },
+  "rules": {
+    "no-unused-expressions": 0
   }
 }

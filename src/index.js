@@ -191,8 +191,8 @@ export default class EasyRSA {
         return {privateKey, csr, commonName};
       }).tap(({privateKey, csr}) => {
         return Promise.all([
-          fs.writeFileAsync(path.join(this.dir, 'reqs', commonName + '.req'), pki.certificationRequestToPem(csr)),
-          fs.writeFileAsync(path.join(this.dir, 'private', commonName + '.key'), pki.privateKeyToPem(privateKey))
+          fs.writeFileAsync(path.join(this.dir, 'reqs', `${commonName}.req`), pki.certificationRequestToPem(csr)),
+          fs.writeFileAsync(path.join(this.dir, 'private', `${commonName}.key`), pki.privateKeyToPem(privateKey))
         ]);
       });
   }
@@ -205,7 +205,7 @@ export default class EasyRSA {
       .then(() => {
         return Promise.props({
           serial: fs.readFileAsync(path.join(this.dir, 'serial')).call('toString'),
-          csr: fs.readFileAsync(path.join(this.dir, 'reqs', commonName + '.req'))
+          csr: fs.readFileAsync(path.join(this.dir, 'reqs', `${commonName}.req`))
                  .then(forge.pki.certificationRequestFromPem)
         });
       })
@@ -275,9 +275,9 @@ export default class EasyRSA {
         const updatedSerial = (parseInt(serial, 16) + 1).toString(16);
         const certPem = pki.certificateToPem(cert);
         return Promise.all([
-          fs.writeFileAsync(path.join(this.dir, 'certs_by_serial', serial + '.pem'), certPem),
-          fs.writeFileAsync(path.join(this.dir, 'issued', commonName + '.crt'), certPem),
-          fs.writeFileAsync(path.join(this.dir, 'serial'), updatedSerial.length % 2 ? '0' + updatedSerial : updatedSerial)
+          fs.writeFileAsync(path.join(this.dir, 'certs_by_serial', `${serial}.pem`), certPem),
+          fs.writeFileAsync(path.join(this.dir, 'issued', `${commonName}.crt`), certPem),
+          fs.writeFileAsync(path.join(this.dir, 'serial'), updatedSerial.length % 2 ? `0${updatedSerial}` : updatedSerial)
         ]);
       });
   }
