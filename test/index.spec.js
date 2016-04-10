@@ -6,7 +6,7 @@ import EasyRSA from './..';
 import {pki} from 'node-forge';
 
 const options = {
-  pkiDir: path.resolve(__dirname, '..', '.tmp', 'pki')
+  pkiDir: path.resolve(__dirname, 'fixtures', 'pki')
 };
 
 describe('EasyRSA', () => {
