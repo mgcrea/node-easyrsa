@@ -4,12 +4,11 @@ import path from 'path';
 import chalk from 'chalk';
 import tildify from 'tildify';
 import pkg from './../../package.json';
-import EasyRSA from './../../lib';
+import EasyRSA from './../..';
 import Promise from 'bluebird';
 import {mapKeys, camelCase} from 'lodash';
 import inquirer from 'inquirer'; Promise.promisifyAll(inquirer);
 import log from './../utils/log';
-try { require('debug-utils'); } catch (err) {/**/}
 
 const argv = yargs
   .usage('Usage: $0 <command> [options]')

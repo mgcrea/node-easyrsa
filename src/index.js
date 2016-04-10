@@ -8,7 +8,6 @@ import forge, {pki, md} from 'node-forge'; Promise.promisifyAll(pki.rsa);
 // import {FileSystemError} from 'core-error-predicates';
 const cwd = process.cwd();
 import moment from 'moment';
-try { require('debug-utils'); } catch (err) {/**/}
 
 export default class EasyRSA {
   static defaults = {
