@@ -1,11 +1,8 @@
-.DS_Store
-.tern-project
-*.log
-*.sublime-project
-*.sublime-workspace
-.idea/
-.tmp/
 node_modules/
-tmp/
-pki/
 lib/
+.DS_Store
+*.log
+.tmp/
+.nyc_output/
+coverage/
+pki/
