@@ -5,6 +5,9 @@ import path from 'path';
 import expect from 'expect';
 import EasyRSA from './..';
 import {pki} from 'node-forge';
+import {map} from 'lodash';
+
+// require('debug-utils');
 
 const options = {
   pkiDir: path.resolve(__dirname, '.tmp')
@@ -41,6 +44,7 @@ describe('EasyRSA', () => {
         const certPem = pki.certificateToPem(cert);
         expect(certPem).toBeA('string');
         expect(certPem).toMatch(/^-----BEGIN CERTIFICATE-----\r\n.+/);
+        expect(map(cert.extensions, 'id')).toEqual(['2.5.29.14', '2.5.29.35', '2.5.29.19', '2.5.29.15']);
       });
     });
   });
@@ -54,6 +58,7 @@ describe('EasyRSA', () => {
         const csrPem = pki.certificationRequestToPem(csr);
         expect(csrPem).toBeA('string');
         expect(csrPem).toMatch(/^-----BEGIN CERTIFICATE REQUEST-----\r\n.+/);
+        expect(map(csr.extensions, 'id')).toEqual([]);
       });
     });
   });
@@ -66,6 +71,7 @@ describe('EasyRSA', () => {
         expect(certPem).toMatch(/^-----BEGIN CERTIFICATE-----\r\n.+/);
         expect(serial).toBeA('string');
         expect(serial).toMatch(/[\da-f]/i);
+        expect(map(cert.extensions, 'id')).toEqual(['2.5.29.19', '2.5.29.14', '2.5.29.35', '2.5.29.15', '2.5.29.37']);
       });
     });
   });
