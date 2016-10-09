@@ -1,5 +1,6 @@
 
 import fs from 'fs';
+import del from 'del';
 import path from 'path';
 import expect from 'expect';
 import EasyRSA from './..';
@@ -10,6 +11,9 @@ const options = {
 };
 
 describe('EasyRSA', () => {
+  before(() => Promise.all([
+    del([options.pkiDir])
+  ]));
   describe('#constructor()', () => {
     it('should properly merge options', () => {
       const easyrsa = new EasyRSA();
