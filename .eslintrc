@@ -1,5 +1,16 @@
 {
-  "extends": "mgcrea/base",
+  "extends": "airbnb-base",
   "parser": "babel-eslint",
-  "rules": {}
+  "rules": {
+    "comma-dangle": ["error", "never"],
+    "import/extensions": 0,
+    "import/no-extraneous-dependencies": 0,
+    "import/no-unresolved": 0,
+    "max-len": ["warn", {"code": 128, "ignoreComments": true}],
+    "no-param-reassign": [2, {"props": false}],
+    "no-underscore-dangle": ["error", {"allow": ["_id"]}],
+    "no-unused-vars": ["error", {"args": "none"}],
+    "no-use-before-define": ["error", {"functions": false}],
+    "object-curly-spacing": ["error", "never"]
+  }
 }

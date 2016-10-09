@@ -19,7 +19,7 @@
   "engines": {
     "node": "^4.2"
   },
-  "author": "Olivier Louvignes <olivier@mg-crea.com>",
+  "author": "Olivier Louvignes <olivier@mgcrea.io>",
   "repository": "github:mgcrea/node-easyrsa",
   "license": "MIT",
   "dependencies": {
@@ -28,9 +28,9 @@
     "core-error-predicates": "^1.1.0",
     "del": "^2.2.2",
     "inquirer": "^1.2.1",
-    "lodash": "^4.16.3",
+    "lodash": "^4.16.4",
     "moment": "^2.15.1",
-    "node-forge": "^0.6.42",
+    "node-forge": "^0.6.43",
     "source-map-support": "^0.4.3",
     "tildify": "^1.2.0",
     "yargs": "^6.0.0"
@@ -44,11 +44,12 @@
     "babel-preset-es2015": "^6.16.0",
     "babel-register": "^6.16.3",
     "codeclimate-test-reporter": "^0.4.0",
-    "eslint-config-mgcrea": "^8.0.0",
     "eslint": "^3.7.1",
+    "eslint-config-airbnb-base": "^8.0.0",
+    "eslint-plugin-import": "^2.0.0",
     "expect": "^1.20.2",
     "mocha": "^3.1.0",
-    "nyc": "^8.3.0",
+    "nyc": "^8.3.1",
     "rimraf": "^2.5.4"
   },
   "optionalDependencies": {

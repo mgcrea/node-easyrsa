@@ -1,14 +1,19 @@
 #!/usr/bin/env node
-import yargs from 'yargs';
-import path from 'path';
-import chalk from 'chalk';
-import tildify from 'tildify';
-import pkg from './../../package.json';
-import EasyRSA from './../..';
-import Promise from 'bluebird';
+
+import 'source-map-support/register';
 import {mapKeys, camelCase} from 'lodash';
-import inquirer from 'inquirer'; Promise.promisifyAll(inquirer);
+import chalk from 'chalk';
+import inquirer from 'inquirer';
+import path from 'path';
+import Promise from 'bluebird';
+import tildify from 'tildify';
+import yargs from 'yargs';
+
+import EasyRSA from './../..';
 import log from './../utils/log';
+import pkg from './../../package.json';
+
+Promise.promisifyAll(inquirer);
 
 const argv = yargs
   .usage('Usage: $0 <command> [options]')
@@ -24,23 +29,27 @@ const argv = yargs
       .option('nopass', {description: 'Do not encrypt the CA key', type: 'boolean'})
       .option('subca', {description: 'Create a sub-CA keypair and request', type: 'boolean'})
       .option('days', {description: 'Sets the signing validity to the specified number of days', default: EasyRSA.defaults.days, type: 'number'})
-      .help('h').alias('h', 'help');
+      .help('h')
+        .alias('h', 'help');
   })
   .command('gen-req', 'Generate a standalone keypair and request (CSR)', () => {
     yargs
       .usage('Usage: easyrsa gen-req <filename_base>')
       .demand(2, 'Error: gen-req must have a file base as the first argument.')
       .option('nopass', {description: 'Do not encrypt the CA key', type: 'boolean'})
-      .help('h').alias('h', 'help');
+      .help('h')
+        .alias('h', 'help');
   })
   .command('sign-req', 'Sign a certificate request of the defined type. <type> must be a known type such as \'client\', \'server\', or \'ca\' (or a user-added type.)', () => {
     yargs
       .usage('Usage: easyrsa sign-req <type> <filename_base>')
       .demand(3, 'Incorrect number of arguments provided')
       .option('nopass', {description: 'Do not encrypt the CA key', type: 'boolean'})
-      .help('h').alias('h', 'help');
+      .help('h')
+        .alias('h', 'help');
   })
-  .help('h').alias('h', 'help')
+  .help('h')
+    .alias('h', 'help')
   // .epilog('copyright 2015')
   .version(pkg.version)
   .argv;
@@ -50,7 +59,7 @@ const cmds = argv._.slice(1);
 switch (argv._[0]) {
   case 'init-pki':
     pki.initPKI()
-    .catch({code: 'EEXIST'}, err => {
+    .catch({code: 'EEXIST'}, (err) => {
       log.warn('You are about to remove the EASYRSA_PKI at: %s and initialize a fresh PKI here.', pki.dir);
       return inquirer.promptAsync({name: 'confirm', message: 'Confirm removal', type: 'confirm', default: false}).catch(({confirm}) => {
         if (!confirm) {
