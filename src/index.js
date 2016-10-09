@@ -46,7 +46,7 @@ export default class EasyRSA {
   }
   initPKI({force = false} = {}) {
     const setupFolders = dir => fs.mkdirAsync(dir)
-      .then(() => Promise.mapSeries([
+      .then(() => Promise.all([
         fs.mkdirAsync(path.join(dir, 'private')),
         fs.mkdirAsync(path.join(dir, 'reqs'))
       ]));
@@ -65,7 +65,7 @@ export default class EasyRSA {
   }
   // https://github.com/OpenVPN/easy-rsa/blob/master/easyrsa3/easyrsa#L408
   // watch -n.75 'openssl x509 -in pki/ca.crt -text -noout'
-  buildCA() {
+  buildCA({commonName = 'Easy-RSA CA'} = {}) {
     const setupFolders = dir => Promise.all([
       fs.mkdirAsync(path.join(dir, 'issued')).catch((err) => {}),
       fs.mkdirAsync(path.join(dir, 'certs_by_serial'))
@@ -82,7 +82,7 @@ export default class EasyRSA {
         cert.validity.notAfter = date.clone().add(this.config.days, 'days').toDate();
         const attrs = [{
           name: 'commonName',
-          value: 'Easy-RSA CA'
+          value: commonName
         }/* , {
           name: 'countryName',
           value: 'US'
@@ -127,7 +127,7 @@ export default class EasyRSA {
       ]));
   }
   // watch -n.75 'openssl req -in pki/reqs/EntityName.req -text -noout'
-  genReq(commonName) {
+  genReq({commonName}) {
     return this.verifyPKI()
       .then(() => generateFastKeyPair(this.config.keysize))
       .then(({privateKey, publicKey}) => {
@@ -229,8 +229,8 @@ export default class EasyRSA {
           case 'client':
             cert.setExtensions([{
               name: 'basicConstraints',
-              critical: true, // iPad
-              cA: false
+              // critical: true, // iPad
+              cA: true
             }, {
               name: 'subjectKeyIdentifier'
             }, {
@@ -239,15 +239,17 @@ export default class EasyRSA {
               // authorityCertIssuer: this._ca.cert.issuer, // not-iPad
               // serialNumber: this._ca.cert.serialNumber // not-iPad
             }, {
-              name: 'keyUsage',
-              critical: true, // iPad
-              digitalSignature: true,
-              keyEncipherment: true // iPad
-            }, {
               name: 'extKeyUsage',
-              critical: true, // iPad
-              serverAuth: true, // iPad
+              // critical: true, // iPad
+              // serverAuth: true, // iPad
               clientAuth: true
+            }, {
+              name: 'keyUsage',
+              cRLSign: true,
+              keyCertSign: true
+              // critical: true, // iPad
+              // digitalSignature: true
+              // keyEncipherment: true // iPad
             }]);
             break;
           default:

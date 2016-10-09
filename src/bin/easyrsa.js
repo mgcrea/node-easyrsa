@@ -83,7 +83,7 @@ switch (argv._[0]) {
     });
     break;
   case 'gen-req':
-    pki.genReq(...cmds)
+    pki.genReq({commonName: cmds[0]})
     .then(({commonName}) => {
       log.info('gen-req complete; you may now sign the certificate request.');
       log.info('Your new certificate request (CSR) file for signing is: %s', prettyPath(path.join(pki.dir, 'reqs', `${commonName}.req`)));
