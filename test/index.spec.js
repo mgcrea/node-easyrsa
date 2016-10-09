@@ -41,10 +41,10 @@ describe.only('EasyRSA', () => {
   before(() => Promise.all([
     del([options.pkiDir]).catch(),
     Promise.props({
-      rootCa: loadCertificateFromFile('fixtures/pki/ca.crt'),
-      serverCa: loadCertificateFromFile('fixtures/pki/issued/server@foo.bar.com.crt'),
-      req: loadCertificationRequestFromFile('fixtures/pki/reqs/baz@foo.bar.com.req'),
-      cert: loadCertificateFromFile('fixtures/pki/issued/baz@foo.bar.com.crt')
+      rootCa: loadCertificateFromFile('fixtures/openvpn/ca.crt'),
+      serverCa: loadCertificateFromFile('fixtures/openvpn/issued/server@foo.bar.com.crt'),
+      req: loadCertificationRequestFromFile('fixtures/openvpn/reqs/baz@foo.bar.com.req'),
+      cert: loadCertificateFromFile('fixtures/openvpn/issued/baz@foo.bar.com.crt')
     }).then((props) => { fixtures = props; })
   ]));
   describe('#constructor()', () => {
