@@ -7,6 +7,7 @@ node_js:
 env:
   global:
     - CODE_CLIMATE_TOKEN=a003d853b7f32531fa0858491c752297d791ea29e47e4dc2d2106af8e1285cd1
+    - CODACY_PROJECT_TOKEN=36330f847fae430991bc63d48e9a7df1
 
 before_script:
   - date --rfc-2822
@@ -19,7 +20,4 @@ script:
 
 after_script:
   - cat coverage/lcov.info | codeclimate-test-reporter
-
-addons:
-  code_climate:
-    repo_token: a003d853b7f32531fa0858491c752297d791ea29e47e4dc2d2106af8e1285cd1
+  - cat coverage/lcov.info | codacy-coverage
