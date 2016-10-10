@@ -159,7 +159,7 @@ describe('EasyRSA ~ mdm', () => {
       const resultCert = pki.certificateFromPem(certPem);
       const expectedCert = fixtures.cert;
       expect(getCertificateIssuer(resultCert)).toEqual(getCertificateSubject(res.ca.cert));
-      // expect(getCertificateIssuer(resultCert)).toEqual(getCertificateIssuer(expectedCert));
+      // expect(getCertificateIssuer(resultCert)).toEqual(getCertificateIssuer(expectedCert)); // @TODO chain
       expect(getCertificateSubject(resultCert)).toEqual(getCertificateSubject(expectedCert));
       expect(resultCert.serialNumber.length).toEqual(expectedCert.serialNumber.length);
       expect(map(resultCert.extensions, 'name').sort()).toEqual(map(expectedCert.extensions, 'name').sort());

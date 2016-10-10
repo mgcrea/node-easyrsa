@@ -7,12 +7,13 @@ import {pki} from 'node-forge';
 import {map, groupBy} from 'lodash';
 
 import EasyRSA from './../src';
-import {assignTo, loadCertificateFromPemFile, loadCertificationRequestFromPemFile} from './helpers';
+import {assignTo, loadCertificateFromPemFile, loadCertificationRequestFromPemFile, getCertificateSubject, getCertificateIssuer} from './helpers';
 
 Promise.promisifyAll(fs);
 
 
 describe('EasyRSA ~ vpn', () => {
+  const res = {};
   const fixtures = {};
   const options = {
     pkiDir: path.resolve(__dirname, '.tmp', 'vpn')
@@ -43,12 +44,11 @@ describe('EasyRSA ~ vpn', () => {
   });
   describe('#buildCA()', () => {
     const easyrsa = new EasyRSA(options);
-    const res = {};
     before(() => Promise.all([
-      easyrsa.buildCA().then(assignTo(res))
+      easyrsa.buildCA({serialNumberBytes: 9}).then(assignTo(res, 'ca'))
     ]));
     it('should properly return a privateKey and a cert', () => {
-      const {privateKey, cert} = res;
+      const {privateKey, cert} = res.ca;
       const privateKeyPem = pki.privateKeyToPem(privateKey);
       expect(privateKeyPem).toBeA('string');
       expect(privateKeyPem).toMatch(/^-----BEGIN RSA PRIVATE KEY-----\r\n.+/);
@@ -58,15 +58,17 @@ describe('EasyRSA ~ vpn', () => {
       expect(cert.serialNumber).toMatch(/[0-9a-f]{16}/);
     });
     it('should have correct extensions', () => {
-      const {cert} = res;
+      const {cert} = res.ca;
       const certPem = pki.certificateToPem(cert);
       const resultCert = pki.certificateFromPem(certPem);
       const expectedCert = fixtures.ca;
+      expect(getCertificateSubject(resultCert)).toEqual(getCertificateSubject(expectedCert));
+      expect(resultCert.serialNumber.length).toEqual(expectedCert.serialNumber.length);
       expect(map(resultCert.extensions, 'name').sort()).toEqual(map(expectedCert.extensions, 'name').sort());
       expect(map(resultCert.extensions, 'id').sort()).toEqual(map(expectedCert.extensions, 'id').sort());
     });
     it('should have correct basicConstraints and keyUsage', () => {
-      const {cert} = res;
+      const {cert} = res.ca;
       const certPem = pki.certificateToPem(cert);
       const resultCert = pki.certificateFromPem(certPem);
       const expectedCert = fixtures.ca;
@@ -78,12 +80,13 @@ describe('EasyRSA ~ vpn', () => {
   });
   describe('#genReq()', () => {
     const easyrsa = new EasyRSA(options);
-    const res = {};
+    const commonName = 'baz@foo.bar.com';
+    const attributes = {};
     before(() => Promise.all([
-      easyrsa.genReq({commonName: 'EntityName'}).then(assignTo(res))
+      easyrsa.genReq({commonName, attributes}).then(assignTo(res, 'req'))
     ]));
     it('should properly return a privateKey and a csr', () => {
-      const {privateKey, csr} = res;
+      const {privateKey, csr} = res.req;
       const privateKeyPem = pki.privateKeyToPem(privateKey);
       expect(privateKeyPem).toBeA('string');
       expect(privateKeyPem).toMatch(/^-----BEGIN RSA PRIVATE KEY-----\r\n.+/);
@@ -92,7 +95,7 @@ describe('EasyRSA ~ vpn', () => {
       expect(csrPem).toMatch(/^-----BEGIN CERTIFICATE REQUEST-----\r\n.+/);
     });
     it('should have correct extensions', () => {
-      const {csr} = res;
+      const {csr} = res.req;
       const csrPem = pki.certificationRequestToPem(csr);
       const resultCsr = pki.certificationRequestFromPem(csrPem);
       const expectedCsr = fixtures.req;
@@ -100,7 +103,7 @@ describe('EasyRSA ~ vpn', () => {
       expect(map(resultCsr.extensions, 'id').sort()).toEqual(map(expectedCsr.extensions, 'id').sort());
     });
     it('should have correct basicConstraints and keyUsage', () => {
-      const {csr} = res;
+      const {csr} = res.req;
       const csrPem = pki.certificationRequestToPem(csr);
       const resultCsr = pki.certificationRequestFromPem(csrPem);
       const expectedCsr = fixtures.req;
@@ -112,12 +115,13 @@ describe('EasyRSA ~ vpn', () => {
   });
   describe('#signReq()', () => {
     const easyrsa = new EasyRSA(options);
-    const res = {};
+    const commonName = 'baz@foo.bar.com';
+    const attributes = {};
     before(() => Promise.all([
-      easyrsa.signReq({commonName: 'EntityName', type: 'client'}).then(assignTo(res))
+      easyrsa.signReq({commonName, attributes, type: 'client', serialNumberBytes: 16}).then(assignTo(res, 'cert'))
     ]));
     it('should properly return a cert and a serial', () => {
-      const {cert, serial} = res;
+      const {cert, serial} = res.cert;
       const certPem = pki.certificateToPem(cert);
       expect(certPem).toBeA('string');
       expect(certPem).toMatch(/^-----BEGIN CERTIFICATE-----\r\n.+/);
@@ -126,15 +130,19 @@ describe('EasyRSA ~ vpn', () => {
       expect(cert.serialNumber).toMatch(/[0-9a-f]{16}/);
     });
     it('should have correct extensions', () => {
-      const {cert} = res;
+      const {cert} = res.cert;
       const certPem = pki.certificateToPem(cert);
       const resultCert = pki.certificateFromPem(certPem);
       const expectedCert = fixtures.cert;
+      expect(getCertificateIssuer(resultCert)).toEqual(getCertificateSubject(res.ca.cert));
+      expect(getCertificateIssuer(resultCert)).toEqual(getCertificateIssuer(expectedCert));
+      expect(getCertificateSubject(resultCert)).toEqual(getCertificateSubject(expectedCert));
+      expect(resultCert.serialNumber.length).toEqual(expectedCert.serialNumber.slice(2).length); // 00?
       expect(map(resultCert.extensions, 'name').sort()).toEqual(map(expectedCert.extensions, 'name').sort());
       expect(map(resultCert.extensions, 'id').sort()).toEqual(map(expectedCert.extensions, 'id').sort());
     });
     it('should have correct basicConstraints and keyUsage', () => {
-      const {cert} = res;
+      const {cert} = res.cert;
       const certPem = pki.certificateToPem(cert);
       const resultCert = pki.certificateFromPem(certPem);
       const expectedCert = fixtures.cert;

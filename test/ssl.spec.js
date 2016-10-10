@@ -145,6 +145,7 @@ describe('EasyRSA ~ ssl', () => {
       expect(serial).toBeA('string');
       expect(serial).toMatch(/[\da-f]/i);
       expect(cert.serialNumber).toMatch(/[0-9a-f]{16}/);
+      expect(getCertificateSubject(cert)).toEqual({commonName, ...attributes});
     });
     it('should have correct extensions', () => {
       const {cert} = res.cert;
@@ -152,7 +153,7 @@ describe('EasyRSA ~ ssl', () => {
       const resultCert = pki.certificateFromPem(certPem);
       const expectedCert = fixtures.cert;
       expect(getCertificateIssuer(resultCert)).toEqual(getCertificateSubject(res.ca.cert));
-      // expect(getCertificateIssuer(resultCert)).toEqual(getCertificateIssuer(expectedCert));
+      // expect(getCertificateIssuer(resultCert)).toEqual(getCertificateIssuer(expectedCert)); // @TODO chain
       expect(getCertificateSubject(resultCert)).toEqual(getCertificateSubject(expectedCert));
       expect(resultCert.serialNumber.length).toEqual(expectedCert.serialNumber.length);
       // expect(map(resultCert.extensions, 'name').sort()).toEqual(map(expectedCert.extensions, 'name').sort());
