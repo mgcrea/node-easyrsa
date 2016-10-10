@@ -273,6 +273,7 @@ export default class EasyRSA {
 function generateFastKeyPair(bits = 2048, exponent = 65537) {
   try {
     const keyPair = require('ursa').generatePrivateKey(bits, exponent); // eslint-disable-line global-require
+
     return {
       privateKey: pki.privateKeyFromPem(keyPair.toPrivatePem().toString()),
       publicKey: pki.publicKeyFromPem(keyPair.toPublicPem().toString())
