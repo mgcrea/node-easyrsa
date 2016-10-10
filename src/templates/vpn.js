@@ -1,6 +1,5 @@
 
 export const buildCA = (cert, {commonName}) => {
-  cert.serialNumber = 'cc3f3ee26d9a574e';
   const attrs = [{
     name: 'commonName',
     value: commonName

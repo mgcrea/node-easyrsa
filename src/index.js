@@ -8,6 +8,7 @@ import moment from 'moment';
 import path from 'path';
 import Promise from 'bluebird';
 import mkdirp from 'mkdirp';
+import crypto from 'crypto';
 
 import templates from './templates';
 
@@ -85,6 +86,7 @@ export default class EasyRSA {
         const date = moment();
         cert.validity.notBefore = date.clone().toDate();
         cert.validity.notAfter = date.clone().add(cfg.days, 'days').toDate();
+        cert.serialNumber = crypto.randomBytes(16).toString('hex');
         // Apply template to certificate
         if (templates[cfg.template].buildCA) {
           templates[cfg.template].buildCA(cert, {commonName});
@@ -137,7 +139,7 @@ export default class EasyRSA {
         }
         const cert = pki.createCertificate();
         cert.publicKey = csr.publicKey;
-        cert.serialNumber = serial;
+        cert.serialNumber = crypto.randomBytes(16).toString('hex');
         const date = moment();
         cert.validity.notBefore = date.clone().toDate();
         cert.validity.notAfter = date.clone().add(cfg.days, 'days').toDate();

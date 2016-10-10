@@ -1,21 +1,20 @@
 
 export const buildCA = (cert, {commonName}) => {
-  cert.serialNumber = 'cc3f3ee26d9a574e';
   const attrs = [{
-    name: 'commonName', // CN
+    name: 'commonName',
     value: commonName
   }/* , {
-    name: 'countryName', // C
+    name: 'countryName',
     value: 'US'
   }, {
-    name: 'stateOrProvinceName', // ST
-    value: 'New York'
+    shortName: 'ST',
+    value: 'Virginia'
   }, {
-    name: 'localityName', // L
-    value: 'New York'
+    name: 'localityName',
+    value: 'Blacksburg'
   }, {
-    name: 'organizationName', // O
-    value: 'DigitalOcean, LLC'
+    name: 'organizationName',
+    value: 'Test'
   }, {
     shortName: 'OU',
     value: 'Test'
@@ -36,9 +35,13 @@ export const buildCA = (cert, {commonName}) => {
   }, {
     name: 'keyUsage',
     critical: true,
-    cRLSign: true,
-    digitalSignature: true,
-    keyCertSign: true
+    keyCertSign: true,
+    cRLSign: true
+  }, {
+    name: 'certificatePolicies',
+    value: `Reliance on this certificate by any party assumes acceptance of the
+    then applicable standard terms and conditions of use, certificate policy and
+    certification practice statements.`
   }]);
 };
 
@@ -90,20 +93,20 @@ export const genReq = (csr, {commonName}) => {
 export const signReq = (cert, {type, commonName, ca}) => {
   //         Subject: CN=F567FC13-704D-47DE-9993-15C8EBB236AF, C=US, ST=CA, L=Cupertino, O=Apple Inc., OU=iPhone
   const attrs = [{
-    name: 'commonName', // CN
+    name: 'commonName',
     value: commonName
   }/* , {
-    name: 'countryName', // C
+    name: 'countryName',
     value: 'US'
   }, {
-    name: 'stateOrProvinceName', // ST
-    value: 'New York'
+    shortName: 'ST',
+    value: 'Virginia'
   }, {
-    name: 'localityName', // L
-    value: 'New York'
+    name: 'localityName',
+    value: 'Blacksburg'
   }, {
-    name: 'organizationName', // O
-    value: 'DigitalOcean, LLC'
+    name: 'organizationName',
+    value: 'Test'
   }, {
     shortName: 'OU',
     value: 'Test'
@@ -118,21 +121,6 @@ export const signReq = (cert, {type, commonName, ca}) => {
         cA: false
       }, {
         name: 'subjectKeyIdentifier'
-      // }, {
-      //   name: 'subjectAltName',
-      //   altNames: []
-      // }, {
-      //   name: 'cRLDistributionPoints',
-      //   altNames: []
-      // }, {
-      //   name: 'authorityInfoAccess',
-      // }, {
-      // }, {
-      //   name: 'certificatePolicies',
-      // }, {
-      // }, {
-      //   name: 'timestampList',
-      // }, {
       }, {
         name: 'authorityKeyIdentifier',
         keyIdentifier: ca.cert.generateSubjectKeyIdentifier().getBytes()
@@ -140,13 +128,17 @@ export const signReq = (cert, {type, commonName, ca}) => {
         // serialNumber: this._ca.cert.serialNumber // not-iPad
       }, {
         name: 'extKeyUsage',
-        clientAuth: true,
-        serverAuth: true
+        critical: true,
+        serverAuth: true,
+        clientAuth: true
       }, {
         name: 'keyUsage',
         critical: true,
         digitalSignature: true,
         keyEncipherment: true
+      }, {
+        id: '1.2.840.113635.100.6.10.2',
+        value: String.fromCharCode(0x0005) + String.fromCharCode(0x0000)
       }]);
       break;
     default:

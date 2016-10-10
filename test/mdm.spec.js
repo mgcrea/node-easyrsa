@@ -4,25 +4,27 @@ import path from 'path';
 import expect from 'expect';
 import Promise from 'bluebird';
 import {pki} from 'node-forge';
-import {map, groupBy} from 'lodash';
+import {map, reject, groupBy} from 'lodash';
 
 import EasyRSA from './../src';
-import {assignTo, loadCertificateFromPemFile, loadCertificationRequestFromPemFile} from './helpers';
+import {assignTo, loadCertificateFromPemFile} from './helpers';
 
 Promise.promisifyAll(fs);
 
-
-describe('EasyRSA ~ vpn', () => {
+describe('EasyRSA ~ mdm', () => {
   const fixtures = {};
   const options = {
-    pkiDir: path.resolve(__dirname, '.tmp', 'vpn')
+    template: 'mdm',
+    pkiDir: path.resolve(__dirname, '.tmp', 'mdm')
   };
   before(() => Promise.all([
     Promise.props({
-      ca: loadCertificateFromPemFile('fixtures/vpn/ca.crt'),
-      chain: Promise.all([loadCertificateFromPemFile('fixtures/vpn/issued/server@foo.bar.com.crt')]),
-      req: loadCertificationRequestFromPemFile('fixtures/vpn/reqs/baz@foo.bar.com.req'),
-      cert: loadCertificateFromPemFile('fixtures/vpn/issued/baz@foo.bar.com.crt')
+      ca: loadCertificateFromPemFile('fixtures/mdm/AppleIncRootCertificate.pem'),
+      chain: Promise.all([
+        loadCertificateFromPemFile('fixtures/mdm/Apple_iPhone_CA.pem'),
+        loadCertificateFromPemFile('fixtures/mdm/Apple_iPhone_Device_CA.pem')
+      ]),
+      cert: loadCertificateFromPemFile('fixtures/mdm/F567FC13-704D-47DE-9993-15C8EBB236AF.pem')
     }).then(assignTo(fixtures))
   ]));
   describe('#constructor()', () => {
@@ -72,6 +74,7 @@ describe('EasyRSA ~ vpn', () => {
       const expectedCert = fixtures.ca;
       const extensions = groupBy(resultCert.extensions, 'name');
       const expectedExtensions = groupBy(expectedCert.extensions, 'name');
+      // d(getCertificateShortSubject(expectedCert));
       expect(extensions.basicConstraints).toEqual(expectedExtensions.basicConstraints);
       expect(extensions.keyUsage).toEqual(expectedExtensions.keyUsage);
     });
@@ -91,24 +94,24 @@ describe('EasyRSA ~ vpn', () => {
       expect(csrPem).toBeA('string');
       expect(csrPem).toMatch(/^-----BEGIN CERTIFICATE REQUEST-----\r\n.+/);
     });
-    it('should have correct extensions', () => {
-      const {csr} = res;
-      const csrPem = pki.certificationRequestToPem(csr);
-      const resultCsr = pki.certificationRequestFromPem(csrPem);
-      const expectedCsr = fixtures.req;
-      expect(map(resultCsr.extensions, 'name').sort()).toEqual(map(expectedCsr.extensions, 'name').sort());
-      expect(map(resultCsr.extensions, 'id').sort()).toEqual(map(expectedCsr.extensions, 'id').sort());
-    });
-    it('should have correct basicConstraints and keyUsage', () => {
-      const {csr} = res;
-      const csrPem = pki.certificationRequestToPem(csr);
-      const resultCsr = pki.certificationRequestFromPem(csrPem);
-      const expectedCsr = fixtures.req;
-      const extensions = groupBy(resultCsr.extensions, 'name');
-      const expectedExtensions = groupBy(expectedCsr.extensions, 'name');
-      expect(extensions.basicConstraints).toEqual(expectedExtensions.basicConstraints);
-      expect(extensions.keyUsage).toEqual(expectedExtensions.keyUsage);
-    });
+    // it('should have correct extensions', () => {
+    //   const {csr} = res;
+    //   const csrPem = pki.certificationRequestToPem(csr);
+    //   const resultCsr = pki.certificationRequestFromPem(csrPem);
+    //   const expectedCsr = fixtures.req;
+    //   expect(map(resultCsr.extensions, 'name')).toEqual(map(expectedCsr.extensions, 'name'));
+    //   expect(map(resultCsr.extensions, 'id')).toEqual(map(expectedCsr.extensions, 'id'));
+    // });
+    // it('should have correct basicConstraints and keyUsage', () => {
+    //   const {csr} = res;
+    //   const csrPem = pki.certificationRequestToPem(csr);
+    //   const resultCsr = pki.certificationRequestFromPem(csrPem);
+    //   const expectedCsr = fixtures.req;
+    //   const extensions = groupBy(resultCsr.extensions, 'name');
+    //   const expectedExtensions = groupBy(expectedCsr.extensions, 'name');
+    //   expect(extensions.basicConstraints).toEqual(expectedExtensions.basicConstraints);
+    //   expect(extensions.keyUsage).toEqual(expectedExtensions.keyUsage);
+    // });
   });
   describe('#signReq()', () => {
     const easyrsa = new EasyRSA(options);
@@ -130,6 +133,7 @@ describe('EasyRSA ~ vpn', () => {
       const certPem = pki.certificateToPem(cert);
       const resultCert = pki.certificateFromPem(certPem);
       const expectedCert = fixtures.cert;
+      // d(reject(expectedCert, 'extensions'));
       expect(map(resultCert.extensions, 'name').sort()).toEqual(map(expectedCert.extensions, 'name').sort());
       expect(map(resultCert.extensions, 'id').sort()).toEqual(map(expectedCert.extensions, 'id').sort());
     });
@@ -138,6 +142,7 @@ describe('EasyRSA ~ vpn', () => {
       const certPem = pki.certificateToPem(cert);
       const resultCert = pki.certificateFromPem(certPem);
       const expectedCert = fixtures.cert;
+      // d(getCertificateShortSubject(expectedCert));
       const extensions = groupBy(resultCert.extensions, 'name');
       const expectedExtensions = groupBy(expectedCert.extensions, 'name');
       expect(extensions.basicConstraints).toEqual(expectedExtensions.basicConstraints);

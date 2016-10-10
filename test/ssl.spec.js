@@ -7,31 +7,22 @@ import {pki} from 'node-forge';
 import {map, groupBy} from 'lodash';
 
 import EasyRSA from './../src';
+import {assignTo, loadCertificateFromPemFile} from './helpers';
 
 Promise.promisifyAll(fs);
 
-const loadCertificateFromFile = filepath =>
-  fs.readFileAsync(path.resolve(__dirname, filepath))
-    .then(::pki.certificateFromPem);
-
-// const loadCertificationRequestFromFile = filepath =>
-//   fs.readFileAsync(path.resolve(__dirname, filepath))
-//     .then(::pki.certificationRequestFromPem);
-
-const assignTo = source => res => Object.assign(source, res);
-
 describe('EasyRSA ~ ssl', () => {
-  let fixtures;
+  const fixtures = {};
   const options = {
     template: 'ssl',
     pkiDir: path.resolve(__dirname, '.tmp', 'ssl')
   };
   before(() => Promise.all([
     Promise.props({
-      rootCa: loadCertificateFromFile('fixtures/https/DigiCert High Assurance EV Root CA.pem'),
-      serverCa: loadCertificateFromFile('fixtures/https/DigiCert SHA2 Extended Validation Server CA.pem'),
-      cert: loadCertificateFromFile('fixtures/https/www.digitalocean.com.pem')
-    }).then((props) => { fixtures = props; })
+      ca: loadCertificateFromPemFile('fixtures/ssl/DigiCert High Assurance EV Root CA.pem'),
+      chain: Promise.all([loadCertificateFromPemFile('fixtures/ssl/DigiCert SHA2 Extended Validation Server CA.pem')]),
+      cert: loadCertificateFromPemFile('fixtures/ssl/www.digitalocean.com.pem')
+    }).then(assignTo(fixtures))
   ]));
   describe('#constructor()', () => {
     it('should properly merge options', () => {
@@ -63,12 +54,13 @@ describe('EasyRSA ~ ssl', () => {
       const certPem = pki.certificateToPem(cert);
       expect(certPem).toBeA('string');
       expect(certPem).toMatch(/^-----BEGIN CERTIFICATE-----\r\n.+/);
+      expect(cert.serialNumber).toMatch(/[0-9a-f]{16}/);
     });
     it('should have correct extensions', () => {
       const {cert} = res;
       const certPem = pki.certificateToPem(cert);
       const resultCert = pki.certificateFromPem(certPem);
-      const expectedCert = fixtures.rootCa;
+      const expectedCert = fixtures.ca;
       expect(map(resultCert.extensions, 'name').sort()).toEqual(map(expectedCert.extensions, 'name').sort());
       expect(map(resultCert.extensions, 'id').sort()).toEqual(map(expectedCert.extensions, 'id').sort());
     });
@@ -76,9 +68,10 @@ describe('EasyRSA ~ ssl', () => {
       const {cert} = res;
       const certPem = pki.certificateToPem(cert);
       const resultCert = pki.certificateFromPem(certPem);
-      const expectedCert = fixtures.rootCa;
+      const expectedCert = fixtures.ca;
       const extensions = groupBy(resultCert.extensions, 'name');
       const expectedExtensions = groupBy(expectedCert.extensions, 'name');
+      // d(getCertificateShortSubject(expectedCert));
       expect(extensions.basicConstraints).toEqual(expectedExtensions.basicConstraints);
       expect(extensions.keyUsage).toEqual(expectedExtensions.keyUsage);
     });
@@ -130,25 +123,27 @@ describe('EasyRSA ~ ssl', () => {
       expect(certPem).toMatch(/^-----BEGIN CERTIFICATE-----\r\n.+/);
       expect(serial).toBeA('string');
       expect(serial).toMatch(/[\da-f]/i);
+      expect(cert.serialNumber).toMatch(/[0-9a-f]{16}/);
     });
     // it('should have correct extensions', () => {
     //   const {cert} = res;
     //   const certPem = pki.certificateToPem(cert);
     //   const resultCert = pki.certificateFromPem(certPem);
     //   const expectedCert = fixtures.cert;
-    //   d(expectedCert.extensions)
     //   expect(map(resultCert.extensions, 'name').sort()).toEqual(map(expectedCert.extensions, 'name').sort());
     //   expect(map(resultCert.extensions, 'id').sort()).toEqual(map(expectedCert.extensions, 'id').sort());
     // });
-    // it('should have correct basicConstraints and keyUsage', () => {
-    //   const {cert} = res;
-    //   const certPem = pki.certificateToPem(cert);
-    //   const resultCert = pki.certificateFromPem(certPem);
-    //   const expectedCert = fixtures.cert;
-    //   const extensions = groupBy(resultCert.extensions, 'name');
-    //   const expectedExtensions = groupBy(expectedCert.extensions, 'name');
-    //   expect(extensions.basicConstraints).toEqual(expectedExtensions.basicConstraints);
-    //   expect(extensions.keyUsage).toEqual(expectedExtensions.keyUsage);
-    // });
+    it('should have correct basicConstraints and keyUsage', () => {
+      const {cert} = res;
+      const certPem = pki.certificateToPem(cert);
+      const resultCert = pki.certificateFromPem(certPem);
+      const expectedCert = fixtures.cert;
+      // d(getCertificateShortSubject(expectedCert));
+      const extensions = groupBy(resultCert.extensions, 'name');
+      const expectedExtensions = groupBy(expectedCert.extensions, 'name');
+      expect(extensions.basicConstraints).toEqual(expectedExtensions.basicConstraints);
+      expect(extensions.keyUsage).toEqual(expectedExtensions.keyUsage);
+      // expect(extensions.extKeyUsage).toEqual(expectedExtensions.extKeyUsage);
+    });
   });
 });
