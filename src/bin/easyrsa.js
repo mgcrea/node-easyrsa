@@ -18,7 +18,7 @@ Promise.promisifyAll(inquirer);
 const argv = yargs
   .usage('Usage: $0 <command> [options]')
   .command('init-pki', 'Removes & re-initializes the PKI dir for a clean PKI')
-  .option('template', {description: 'Certificate template to use', type: 'string', default: EasyRSA.defaults.template})
+  .option('template', {description: 'EasyRSA template to use', type: 'string', default: EasyRSA.defaults.template})
   .demand(1)
   // .example('$0 count -f foo.js', 'count the lines in the given file')
   // .demand('f')
@@ -92,7 +92,7 @@ switch (argv._[0]) {
     });
     break;
   case 'sign-req':
-    pki.signReq(...cmds)
+    pki.signReq({commonName: cmds[0]})
     .then(({commonName}) => {
       log.info('sign-req complete; you may now use the provided certificate.');
       log.info('Your new certificate file is: %s', prettyPath(path.join(pki.dir, 'issued', `${commonName}.crt`)));
