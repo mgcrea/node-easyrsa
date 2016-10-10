@@ -1,7 +1,7 @@
 {
   "name": "easyrsa",
-  "version": "3.0.0-alpha.4",
-  "description": "EasyRSA NodeJS implementation",
+  "version": "3.0.0",
+  "description": "EasyRSA public key infrastructure management",
   "main": "lib/index.js",
   "bin": {
     "easyrsa": "lib/bin/easyrsa.js"
@@ -12,7 +12,7 @@
     "test:watch": "npm run test -- --watch",
     "test:coverage": "nyc --reporter=lcov npm test -- --reporter dot && nyc report",
     "lint": "NODE_ENV=test eslint src/",
-    "compile": "rimraf lib/*; babel src/ -d lib/ -s",
+    "compile": "rimraf lib/*; NODE_ENV=production babel src/ -d lib/ -s",
     "compile:watch": "npm run compile -- -w",
     "prepublish": "npm run compile"
   },
