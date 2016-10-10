@@ -18,6 +18,7 @@ Promise.promisifyAll(inquirer);
 const argv = yargs
   .usage('Usage: $0 <command> [options]')
   .command('init-pki', 'Removes & re-initializes the PKI dir for a clean PKI')
+  .option('template', {description: 'Certificate template to use', type: 'string', default: EasyRSA.defaults.template})
   .demand(1)
   // .example('$0 count -f foo.js', 'count the lines in the given file')
   // .demand('f')

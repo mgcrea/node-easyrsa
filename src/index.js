@@ -7,9 +7,13 @@ import fs from 'fs';
 import moment from 'moment';
 import path from 'path';
 import Promise from 'bluebird';
+import mkdirp from 'mkdirp';
+
+import templates from './templates';
 
 Promise.promisifyAll(fs);
 Promise.promisifyAll(pki.rsa);
+const mkdirpAsync = Promise.promisify(mkdirp);
 
 const cwd = process.cwd();
 const noop = () => {};
@@ -17,6 +21,7 @@ const noop = () => {};
 export default class EasyRSA {
   static defaults = {
     pkiDir: path.join(cwd, 'pki'),
+    template: 'vpn',
     keysize: 2048,
     nopass: false,
     subca: false,
@@ -45,7 +50,7 @@ export default class EasyRSA {
     });
   }
   initPKI({force = false} = {}) {
-    const setupFolders = dir => fs.mkdirAsync(dir)
+    const setupFolders = dir => mkdirpAsync(dir)
       .then(() => Promise.all([
         fs.mkdirAsync(path.join(dir, 'private')),
         fs.mkdirAsync(path.join(dir, 'reqs'))
@@ -66,56 +71,24 @@ export default class EasyRSA {
   // https://github.com/OpenVPN/easy-rsa/blob/master/easyrsa3/easyrsa#L408
   // watch -n.75 'openssl x509 -in pki/ca.crt -text -noout'
   buildCA({commonName = 'Easy-RSA CA'} = {}) {
+    const cfg = this.config;
     const setupFolders = dir => Promise.all([
       fs.mkdirAsync(path.join(dir, 'issued')).catch((err) => {}),
       fs.mkdirAsync(path.join(dir, 'certs_by_serial'))
     ]);
     return this.verifyPKI()
       .then(() => setupFolders(this.dir).catch(noop))
-      .then(() => generateFastKeyPair(this.config.keysize))
+      .then(() => generateFastKeyPair(cfg.keysize))
       .then(({privateKey, publicKey}) => {
         const cert = pki.createCertificate();
         cert.publicKey = publicKey;
-        cert.serialNumber = 'cc3f3ee26d9a574e';
         const date = moment();
         cert.validity.notBefore = date.clone().toDate();
-        cert.validity.notAfter = date.clone().add(this.config.days, 'days').toDate();
-        const attrs = [{
-          name: 'commonName',
-          value: commonName
-        }/* , {
-          name: 'countryName',
-          value: 'US'
-        }, {
-          shortName: 'ST',
-          value: 'Virginia'
-        }, {
-          name: 'localityName',
-          value: 'Blacksburg'
-        }, {
-          name: 'organizationName',
-          value: 'Test'
-        }, {
-          shortName: 'OU',
-          value: 'Test'
-        }*/];
-        cert.setSubject(attrs);
-        cert.setIssuer(attrs);
-        cert.setExtensions([{
-          name: 'subjectKeyIdentifier'
-        }, {
-          name: 'authorityKeyIdentifier',
-          keyIdentifier: true,
-          authorityCertIssuer: true,
-          serialNumber: true
-        }, {
-          name: 'basicConstraints',
-          cA: true
-        }, {
-          name: 'keyUsage',
-          keyCertSign: true,
-          cRLSign: true
-        }]);
+        cert.validity.notAfter = date.clone().add(cfg.days, 'days').toDate();
+        // Apply template to certificate
+        if (templates[cfg.template].buildCA) {
+          templates[cfg.template].buildCA(cert, {commonName});
+        }
         cert.sign(privateKey, md.sha256.create());
         return {privateKey, cert};
       })
@@ -127,54 +100,17 @@ export default class EasyRSA {
       ]));
   }
   // watch -n.75 'openssl req -in pki/reqs/EntityName.req -text -noout'
-  genReq({commonName}) {
+  genReq({commonName = 'Easy-RSA CA'}) {
+    const cfg = this.config;
     return this.verifyPKI()
-      .then(() => generateFastKeyPair(this.config.keysize))
+      .then(() => generateFastKeyPair(cfg.keysize))
       .then(({privateKey, publicKey}) => {
         const csr = pki.createCertificationRequest();
         csr.publicKey = publicKey;
-        csr.setSubject([{
-          name: 'commonName',
-          value: commonName
-        }/* , {
-          name: 'countryName',
-          value: 'US'
-        }, {
-          shortName: 'ST',
-          value: 'Virginia'
-        }, {
-          name: 'localityName',
-          value: 'Blacksburg'
-        }, {
-          name: 'organizationName',
-          value: 'Test'
-        }, {
-          shortName: 'OU',
-          value: 'Test'
-        }*/]);
-        // csr.setAttributes([{
-        //   name: 'challengePassword',
-        //   value: 'password'
-        // }, {
-        //   name: 'unstructuredName',
-        //   value: 'My Company, Inc.'
-        // }, {
-        //   name: 'extensionRequest',
-        //   extensions: [{
-        //     name: 'subjectAltName',
-        //     altNames: [{
-        //       // 2 is DNS type
-        //       type: 2,
-        //       value: 'test.domain.com'
-        //     }, {
-        //       type: 2,
-        //       value: 'other.domain.com',
-        //     }, {
-        //       type: 2,
-        //       value: 'www.domain.net'
-        //     }]
-        //   }]
-        // }]);
+        // Apply template to certificate
+        if (templates[cfg.template].genReq) {
+          templates[cfg.template].genReq(csr, {commonName});
+        }
         csr.sign(privateKey, md.sha256.create());
         return {privateKey, csr, commonName};
       }).tap(({privateKey, csr}) => Promise.all([
@@ -182,18 +118,20 @@ export default class EasyRSA {
         fs.writeFileAsync(path.join(this.dir, 'private', `${commonName}.key`), pki.privateKeyToPem(privateKey))
       ]));
   }
-  signReq(type = 'client', commonName) {
+  signReq({commonName, type = 'client'}) {
+    const cfg = this.config;
     if (!commonName) {
       throw new Error('Missing commonName');
     }
     return this.verifyPKI()
       .then(::this.loadCA)
       .then(() => Promise.props({
+        index: fs.readFileAsync(path.join(this.dir, 'index.txt')).call('toString'),
         serial: fs.readFileAsync(path.join(this.dir, 'serial')).call('toString'),
         csr: fs.readFileAsync(path.join(this.dir, 'reqs', `${commonName}.req`))
                .then(forge.pki.certificationRequestFromPem)
       }))
-      .then(({csr, serial}) => {
+      .then(({csr, index, serial}) => {
         if (!csr.verify()) {
           throw new Error('The certificate request file is not in a valid X509 request format.');
         }
@@ -202,66 +140,21 @@ export default class EasyRSA {
         cert.serialNumber = serial;
         const date = moment();
         cert.validity.notBefore = date.clone().toDate();
-        cert.validity.notAfter = date.clone().add(this.config.days, 'days').toDate();
-        //         Subject: CN=F567FC13-704D-47DE-9993-15C8EBB236AF, C=US, ST=CA, L=Cupertino, O=Apple Inc., OU=iPhone
-        const attrs = [{
-          name: 'commonName',
-          value: 'Easy-RSA CA'
-        }/* , {
-          name: 'countryName',
-          value: 'US'
-        }, {
-          shortName: 'ST',
-          value: 'Virginia'
-        }, {
-          name: 'localityName',
-          value: 'Blacksburg'
-        }, {
-          name: 'organizationName',
-          value: 'Test'
-        }, {
-          shortName: 'OU',
-          value: 'Test'
-        }*/];
-        cert.setSubject(attrs);
-        cert.setIssuer(attrs);
-        switch (type) {
-          case 'client':
-            cert.setExtensions([{
-              name: 'basicConstraints',
-              // critical: true, // iPad
-              cA: true
-            }, {
-              name: 'subjectKeyIdentifier'
-            }, {
-              name: 'authorityKeyIdentifier',
-              keyIdentifier: this.ca.cert.generateSubjectKeyIdentifier().getBytes()
-              // authorityCertIssuer: this._ca.cert.issuer, // not-iPad
-              // serialNumber: this._ca.cert.serialNumber // not-iPad
-            }, {
-              name: 'extKeyUsage',
-              // critical: true, // iPad
-              // serverAuth: true, // iPad
-              clientAuth: true
-            }, {
-              name: 'keyUsage',
-              cRLSign: true,
-              keyCertSign: true
-              // critical: true, // iPad
-              // digitalSignature: true
-              // keyEncipherment: true // iPad
-            }]);
-            break;
-          default:
-            throw new Error('Type not supported');
+        cert.validity.notAfter = date.clone().add(cfg.days, 'days').toDate();
+        // Apply template to certificate
+        if (templates[cfg.template].signReq) {
+          templates[cfg.template].signReq(cert, {commonName, type, ca: this.ca});
         }
         cert.sign(this.ca.privateKey, md.sha256.create());
         return {cert, serial, commonName};
       })
-      .tap(({cert, serial}) => {
+      .tap(({cert, index, serial}) => {
         const updatedSerial = (parseInt(serial, 16) + 1).toString(16);
         const certPem = pki.certificateToPem(cert);
+        const indexKey = cert.tbsCertificate.value[4].value[1].value;
+        const indexContent = `${index ? `${index}\n` : ''}V ${indexKey}    ${cert.serialNumber}  unknown /CN=${commonName}`;
         return Promise.all([
+          fs.writeFileAsync(path.join(this.dir, 'index.txt'), indexContent),
           fs.writeFileAsync(path.join(this.dir, 'certs_by_serial', `${serial}.pem`), certPem),
           fs.writeFileAsync(path.join(this.dir, 'issued', `${commonName}.crt`), certPem),
           fs.writeFileAsync(path.join(this.dir, 'serial'), updatedSerial.length % 2 ? `0${updatedSerial}` : updatedSerial)

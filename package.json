@@ -29,6 +29,7 @@
     "del": "^2.2.2",
     "inquirer": "^1.2.1",
     "lodash": "^4.16.4",
+    "mkdirp": "^0.5.1",
     "moment": "^2.15.1",
     "node-forge": "^0.6.43",
     "source-map-support": "^0.4.3",
