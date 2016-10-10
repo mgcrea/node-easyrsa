@@ -8,10 +8,10 @@
   },
   "scripts": {
     "start": "npm run test:watch",
-    "test": "mocha",
+    "test": "NODE_ENV=test mocha",
     "test:watch": "npm run test -- --watch",
     "test:coverage": "nyc --reporter=lcov npm test -- --reporter dot && nyc report",
-    "lint": "eslint src/",
+    "lint": "NODE_ENV=test eslint src/",
     "compile": "rimraf lib/*; babel src/ -d lib/ -s",
     "compile:watch": "npm run compile -- -w",
     "prepublish": "npm run compile"
@@ -39,6 +39,7 @@
   "devDependencies": {
     "babel-cli": "^6.16.0",
     "babel-eslint": "^7.0.0",
+    "babel-plugin-istanbul": "^2.0.1",
     "babel-plugin-transform-class-properties": "^6.16.0",
     "babel-plugin-transform-function-bind": "^6.8.0",
     "babel-plugin-transform-object-rest-spread": "^6.16.0",
