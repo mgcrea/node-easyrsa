@@ -1,4 +1,4 @@
 --ui bdd
 --compilers js:babel-register
---timeout 20000
+--timeout 30000
 --recursive
