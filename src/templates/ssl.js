@@ -1,27 +1,5 @@
 
 export const buildCA = (cert, {commonName}) => {
-  cert.serialNumber = 'cc3f3ee26d9a574e';
-  const attrs = [{
-    name: 'commonName', // CN
-    value: commonName
-  }/* , {
-    name: 'countryName', // C
-    value: 'US'
-  }, {
-    name: 'stateOrProvinceName', // ST
-    value: 'New York'
-  }, {
-    name: 'localityName', // L
-    value: 'New York'
-  }, {
-    name: 'organizationName', // O
-    value: 'DigitalOcean, LLC'
-  }, {
-    shortName: 'OU',
-    value: 'Test'
-  }*/];
-  cert.setSubject(attrs);
-  cert.setIssuer(attrs);
   cert.setExtensions([{
     name: 'subjectKeyIdentifier'
   }, {
@@ -43,25 +21,6 @@ export const buildCA = (cert, {commonName}) => {
 };
 
 export const genReq = (csr, {commonName}) => {
-  csr.setSubject([{
-    name: 'commonName',
-    value: commonName
-  }/* , {
-    name: 'countryName',
-    value: 'US'
-  }, {
-    shortName: 'ST',
-    value: 'Virginia'
-  }, {
-    name: 'localityName',
-    value: 'Blacksburg'
-  }, {
-    name: 'organizationName',
-    value: 'Test'
-  }, {
-    shortName: 'OU',
-    value: 'Test'
-  }*/]);
   // csr.setAttributes([{
   //   name: 'challengePassword',
   //   value: 'password'
@@ -88,28 +47,6 @@ export const genReq = (csr, {commonName}) => {
 };
 
 export const signReq = (cert, {type, commonName, ca}) => {
-  //         Subject: CN=F567FC13-704D-47DE-9993-15C8EBB236AF, C=US, ST=CA, L=Cupertino, O=Apple Inc., OU=iPhone
-  const attrs = [{
-    name: 'commonName', // CN
-    value: commonName
-  }/* , {
-    name: 'countryName', // C
-    value: 'US'
-  }, {
-    name: 'stateOrProvinceName', // ST
-    value: 'New York'
-  }, {
-    name: 'localityName', // L
-    value: 'New York'
-  }, {
-    name: 'organizationName', // O
-    value: 'DigitalOcean, LLC'
-  }, {
-    shortName: 'OU',
-    value: 'Test'
-  }*/];
-  cert.setSubject(attrs);
-  cert.setIssuer(attrs);
   switch (type) {
     case 'client':
       cert.setExtensions([{

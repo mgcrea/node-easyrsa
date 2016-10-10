@@ -4,14 +4,15 @@ import path from 'path';
 import expect from 'expect';
 import Promise from 'bluebird';
 import {pki} from 'node-forge';
-import {map, reject, groupBy} from 'lodash';
+import {map, groupBy} from 'lodash';
 
 import EasyRSA from './../src';
-import {assignTo, loadCertificateFromPemFile} from './helpers';
+import {assignTo, loadCertificateFromPemFile, getCertificateSubject, getCertificateIssuer} from './helpers';
 
 Promise.promisifyAll(fs);
 
 describe('EasyRSA ~ mdm', () => {
+  const res = {};
   const fixtures = {};
   const options = {
     template: 'mdm',
@@ -45,30 +46,39 @@ describe('EasyRSA ~ mdm', () => {
   });
   describe('#buildCA()', () => {
     const easyrsa = new EasyRSA(options);
-    const res = {};
+    const commonName = 'Apple Root CA';
+    const attributes = {
+      countryName: 'US',
+      organizationName: 'Apple Inc.',
+      organizationalUnitName: 'Apple Certification Authority'
+    };
     before(() => Promise.all([
-      easyrsa.buildCA().then(assignTo(res))
+      easyrsa.buildCA({commonName, attributes, serialNumber: '02'}).then(assignTo(res, 'ca'))
     ]));
     it('should properly return a privateKey and a cert', () => {
-      const {privateKey, cert} = res;
+      const {privateKey, cert} = res.ca;
       const privateKeyPem = pki.privateKeyToPem(privateKey);
       expect(privateKeyPem).toBeA('string');
       expect(privateKeyPem).toMatch(/^-----BEGIN RSA PRIVATE KEY-----\r\n.+/);
       const certPem = pki.certificateToPem(cert);
       expect(certPem).toBeA('string');
       expect(certPem).toMatch(/^-----BEGIN CERTIFICATE-----\r\n.+/);
-      expect(cert.serialNumber).toMatch(/[0-9a-f]{16}/);
+      expect(cert.serialNumber).toMatch(/[0-9a-f]{2}/);
+      expect(getCertificateSubject(cert)).toEqual({commonName, ...attributes});
     });
     it('should have correct extensions', () => {
-      const {cert} = res;
+      const {cert} = res.ca;
       const certPem = pki.certificateToPem(cert);
       const resultCert = pki.certificateFromPem(certPem);
       const expectedCert = fixtures.ca;
+      // expect(getSubjectFromAttrs(cert.issuer.attributes.attributes)).toEqual(getCertificateSubject(res.ca.cert));
+      expect(getCertificateSubject(resultCert)).toEqual(getCertificateSubject(expectedCert));
+      expect(resultCert.serialNumber.length).toEqual(expectedCert.serialNumber.length);
       expect(map(resultCert.extensions, 'name').sort()).toEqual(map(expectedCert.extensions, 'name').sort());
       expect(map(resultCert.extensions, 'id').sort()).toEqual(map(expectedCert.extensions, 'id').sort());
     });
     it('should have correct basicConstraints and keyUsage', () => {
-      const {cert} = res;
+      const {cert} = res.ca;
       const certPem = pki.certificateToPem(cert);
       const resultCert = pki.certificateFromPem(certPem);
       const expectedCert = fixtures.ca;
@@ -81,12 +91,19 @@ describe('EasyRSA ~ mdm', () => {
   });
   describe('#genReq()', () => {
     const easyrsa = new EasyRSA(options);
-    const res = {};
+    const commonName = 'F567FC13-704D-47DE-9993-15C8EBB236AF';
+    const attributes = {
+      countryName: 'US',
+      organizationName: 'Apple Inc.',
+      organizationalUnitName: 'iPhone',
+      localityName: 'Cupertino',
+      stateOrProvinceName: 'CA'
+    };
     before(() => Promise.all([
-      easyrsa.genReq({commonName: 'EntityName'}).then(assignTo(res))
+      easyrsa.genReq({commonName, attributes}).then(assignTo(res, 'req'))
     ]));
     it('should properly return a privateKey and a csr', () => {
-      const {privateKey, csr} = res;
+      const {privateKey, csr} = res.req;
       const privateKeyPem = pki.privateKeyToPem(privateKey);
       expect(privateKeyPem).toBeA('string');
       expect(privateKeyPem).toMatch(/^-----BEGIN RSA PRIVATE KEY-----\r\n.+/);
@@ -115,30 +132,41 @@ describe('EasyRSA ~ mdm', () => {
   });
   describe('#signReq()', () => {
     const easyrsa = new EasyRSA(options);
-    const res = {};
+    const commonName = 'F567FC13-704D-47DE-9993-15C8EBB236AF';
+    const attributes = {
+      countryName: 'US',
+      organizationName: 'Apple Inc.',
+      organizationalUnitName: 'iPhone',
+      localityName: 'Cupertino',
+      stateOrProvinceName: 'CA'
+    };
     before(() => Promise.all([
-      easyrsa.signReq({commonName: 'EntityName', type: 'client'}).then(assignTo(res))
+      easyrsa.signReq({commonName, attributes, type: 'client', serialNumberBytes: 10}).then(assignTo(res, 'cert'))
     ]));
     it('should properly return a cert and a serial', () => {
-      const {cert, serial} = res;
+      const {cert, serial} = res.cert;
       const certPem = pki.certificateToPem(cert);
       expect(certPem).toBeA('string');
       expect(certPem).toMatch(/^-----BEGIN CERTIFICATE-----\r\n.+/);
       expect(serial).toBeA('string');
       expect(serial).toMatch(/[\da-f]/i);
-      expect(cert.serialNumber).toMatch(/[0-9a-f]{16}/);
+      expect(cert.serialNumber).toMatch(/[0-9a-f]{10}/);
+      expect(getCertificateSubject(cert)).toEqual({commonName, ...attributes});
     });
     it('should have correct extensions', () => {
-      const {cert} = res;
+      const {cert} = res.cert;
       const certPem = pki.certificateToPem(cert);
       const resultCert = pki.certificateFromPem(certPem);
       const expectedCert = fixtures.cert;
-      // d(reject(expectedCert, 'extensions'));
+      expect(getCertificateIssuer(resultCert)).toEqual(getCertificateSubject(res.ca.cert));
+      // expect(getCertificateIssuer(resultCert)).toEqual(getCertificateIssuer(expectedCert));
+      expect(getCertificateSubject(resultCert)).toEqual(getCertificateSubject(expectedCert));
+      expect(resultCert.serialNumber.length).toEqual(expectedCert.serialNumber.length);
       expect(map(resultCert.extensions, 'name').sort()).toEqual(map(expectedCert.extensions, 'name').sort());
       expect(map(resultCert.extensions, 'id').sort()).toEqual(map(expectedCert.extensions, 'id').sort());
     });
     it('should have correct basicConstraints and keyUsage', () => {
-      const {cert} = res;
+      const {cert} = res.cert;
       const certPem = pki.certificateToPem(cert);
       const resultCert = pki.certificateFromPem(certPem);
       const expectedCert = fixtures.cert;

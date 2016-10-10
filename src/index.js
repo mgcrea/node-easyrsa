@@ -1,6 +1,6 @@
 // import {FileSystemError} from 'core-error-predicates';
 
-import {pick, defaults} from 'lodash';
+import {pick, isObject, defaults} from 'lodash';
 import del from 'del';
 import forge, {pki, md} from 'node-forge';
 import fs from 'fs';
@@ -71,7 +71,7 @@ export default class EasyRSA {
   }
   // https://github.com/OpenVPN/easy-rsa/blob/master/easyrsa3/easyrsa#L408
   // watch -n.75 'openssl x509 -in pki/ca.crt -text -noout'
-  buildCA({commonName = 'Easy-RSA CA'} = {}) {
+  buildCA({commonName = 'Easy-RSA CA', attributes, serialNumber, serialNumberBytes = 16} = {}) {
     const cfg = this.config;
     const setupFolders = dir => Promise.all([
       fs.mkdirAsync(path.join(dir, 'issued')).catch((err) => {}),
@@ -86,11 +86,15 @@ export default class EasyRSA {
         const date = moment();
         cert.validity.notBefore = date.clone().toDate();
         cert.validity.notAfter = date.clone().add(cfg.days, 'days').toDate();
-        cert.serialNumber = crypto.randomBytes(16).toString('hex');
+        cert.serialNumber = serialNumber || crypto.randomBytes(serialNumberBytes).toString('hex');
+        // Apply subject attributes
+        const subject = buildSubjectFromOptions({commonName, attributes});
+        cert.setSubject(subject);
         // Apply template to certificate
         if (templates[cfg.template].buildCA) {
           templates[cfg.template].buildCA(cert, {commonName});
         }
+        cert.setIssuer(cert.subject);
         cert.sign(privateKey, md.sha256.create());
         return {privateKey, cert};
       })
@@ -102,13 +106,16 @@ export default class EasyRSA {
       ]));
   }
   // watch -n.75 'openssl req -in pki/reqs/EntityName.req -text -noout'
-  genReq({commonName = 'Easy-RSA CA'}) {
+  genReq({commonName = 'Easy-RSA CA', attributes}) {
     const cfg = this.config;
     return this.verifyPKI()
       .then(() => generateFastKeyPair(cfg.keysize))
       .then(({privateKey, publicKey}) => {
         const csr = pki.createCertificationRequest();
         csr.publicKey = publicKey;
+        // Apply subject attributes
+        // const subject = buildSubjectFromOptions({commonName, attributes});
+        // csr.setSubject(subject);
         // Apply template to certificate
         if (templates[cfg.template].genReq) {
           templates[cfg.template].genReq(csr, {commonName});
@@ -120,7 +127,7 @@ export default class EasyRSA {
         fs.writeFileAsync(path.join(this.dir, 'private', `${commonName}.key`), pki.privateKeyToPem(privateKey))
       ]));
   }
-  signReq({commonName, type = 'client'}) {
+  signReq({commonName, attributes, type = 'client', serialNumber, serialNumberBytes = 16}) {
     const cfg = this.config;
     if (!commonName) {
       throw new Error('Missing commonName');
@@ -139,14 +146,18 @@ export default class EasyRSA {
         }
         const cert = pki.createCertificate();
         cert.publicKey = csr.publicKey;
-        cert.serialNumber = crypto.randomBytes(16).toString('hex');
+        cert.serialNumber = serialNumber || crypto.randomBytes(serialNumberBytes).toString('hex');
         const date = moment();
         cert.validity.notBefore = date.clone().toDate();
         cert.validity.notAfter = date.clone().add(cfg.days, 'days').toDate();
+        // Apply subject attributes
+        const subject = buildSubjectFromOptions({commonName, attributes});
+        cert.setSubject(subject);
         // Apply template to certificate
         if (templates[cfg.template].signReq) {
-          templates[cfg.template].signReq(cert, {commonName, type, ca: this.ca});
+          templates[cfg.template].signReq(cert, {subject, type, ca: this.ca});
         }
+        cert.setIssuer(this.ca.cert.subject.attributes);
         cert.sign(this.ca.privateKey, md.sha256.create());
         return {cert, serial, commonName};
       })
@@ -163,6 +174,19 @@ export default class EasyRSA {
         ]);
       });
   }
+}
+
+function buildSubjectFromOptions({commonName, attributes}) {
+  let subject = [{name: 'commonName', value: commonName}];
+  if (isObject(attributes)) {
+    const attrsAsArray = Object.keys(attributes).reduce((soFar, key) => (
+      soFar.concat([{name: key, value: attributes[key]}])
+    ), []);
+    subject = subject.concat(attrsAsArray);
+  } else if (attributes) {
+    subject = subject.concat(attributes);
+  }
+  return subject;
 }
 
 function generateFastKeyPair(bits = 2048, exponent = 65537) {

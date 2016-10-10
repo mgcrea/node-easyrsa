@@ -7,11 +7,12 @@ import {pki} from 'node-forge';
 import {map, groupBy} from 'lodash';
 
 import EasyRSA from './../src';
-import {assignTo, loadCertificateFromPemFile} from './helpers';
+import {assignTo, loadCertificateFromPemFile, getCertificateSubject, getCertificateIssuer} from './helpers';
 
 Promise.promisifyAll(fs);
 
 describe('EasyRSA ~ ssl', () => {
+  const res = {};
   const fixtures = {};
   const options = {
     template: 'ssl',
@@ -42,12 +43,17 @@ describe('EasyRSA ~ ssl', () => {
   });
   describe('#buildCA()', () => {
     const easyrsa = new EasyRSA(options);
-    const res = {};
+    const commonName = 'DigiCert High Assurance EV Root CA';
+    const attributes = {
+      countryName: 'US',
+      organizationName: 'DigiCert Inc',
+      organizationalUnitName: 'www.digicert.com'
+    };
     before(() => Promise.all([
-      easyrsa.buildCA().then(assignTo(res))
+      easyrsa.buildCA({commonName, attributes}).then(assignTo(res, 'ca'))
     ]));
     it('should properly return a privateKey and a cert', () => {
-      const {privateKey, cert} = res;
+      const {privateKey, cert} = res.ca;
       const privateKeyPem = pki.privateKeyToPem(privateKey);
       expect(privateKeyPem).toBeA('string');
       expect(privateKeyPem).toMatch(/^-----BEGIN RSA PRIVATE KEY-----\r\n.+/);
@@ -55,17 +61,20 @@ describe('EasyRSA ~ ssl', () => {
       expect(certPem).toBeA('string');
       expect(certPem).toMatch(/^-----BEGIN CERTIFICATE-----\r\n.+/);
       expect(cert.serialNumber).toMatch(/[0-9a-f]{16}/);
+      expect(getCertificateSubject(cert)).toEqual({commonName, ...attributes});
     });
     it('should have correct extensions', () => {
-      const {cert} = res;
+      const {cert} = res.ca;
       const certPem = pki.certificateToPem(cert);
       const resultCert = pki.certificateFromPem(certPem);
       const expectedCert = fixtures.ca;
+      expect(getCertificateSubject(resultCert)).toEqual(getCertificateSubject(expectedCert));
+      expect(resultCert.serialNumber.length).toEqual(expectedCert.serialNumber.length);
       expect(map(resultCert.extensions, 'name').sort()).toEqual(map(expectedCert.extensions, 'name').sort());
       expect(map(resultCert.extensions, 'id').sort()).toEqual(map(expectedCert.extensions, 'id').sort());
     });
     it('should have correct basicConstraints and keyUsage', () => {
-      const {cert} = res;
+      const {cert} = res.ca;
       const certPem = pki.certificateToPem(cert);
       const resultCert = pki.certificateFromPem(certPem);
       const expectedCert = fixtures.ca;
@@ -78,12 +87,18 @@ describe('EasyRSA ~ ssl', () => {
   });
   describe('#genReq()', () => {
     const easyrsa = new EasyRSA(options);
-    const res = {};
+    const commonName = 'www.digitalocean.com';
+    const attributes = {
+      countryName: 'US',
+      organizationName: 'DigitalOcean, LLC',
+      localityName: 'New York',
+      stateOrProvinceName: 'New York'
+    };
     before(() => Promise.all([
-      easyrsa.genReq({commonName: 'EntityName'}).then(assignTo(res))
+      easyrsa.genReq({commonName, attributes}).then(assignTo(res, 'req'))
     ]));
     it('should properly return a privateKey and a csr', () => {
-      const {privateKey, csr} = res;
+      const {privateKey, csr} = res.req;
       const privateKeyPem = pki.privateKeyToPem(privateKey);
       expect(privateKeyPem).toBeA('string');
       expect(privateKeyPem).toMatch(/^-----BEGIN RSA PRIVATE KEY-----\r\n.+/);
@@ -112,12 +127,18 @@ describe('EasyRSA ~ ssl', () => {
   });
   describe('#signReq()', () => {
     const easyrsa = new EasyRSA(options);
-    const res = {};
+    const commonName = 'www.digitalocean.com';
+    const attributes = {
+      countryName: 'US',
+      organizationName: 'DigitalOcean, LLC',
+      localityName: 'New York',
+      stateOrProvinceName: 'New York'
+    };
     before(() => Promise.all([
-      easyrsa.signReq({commonName: 'EntityName', type: 'client'}).then(assignTo(res))
+      easyrsa.signReq({commonName, attributes, type: 'client'}).then(assignTo(res, 'cert'))
     ]));
     it('should properly return a cert and a serial', () => {
-      const {cert, serial} = res;
+      const {cert, serial} = res.cert;
       const certPem = pki.certificateToPem(cert);
       expect(certPem).toBeA('string');
       expect(certPem).toMatch(/^-----BEGIN CERTIFICATE-----\r\n.+/);
@@ -125,16 +146,20 @@ describe('EasyRSA ~ ssl', () => {
       expect(serial).toMatch(/[\da-f]/i);
       expect(cert.serialNumber).toMatch(/[0-9a-f]{16}/);
     });
-    // it('should have correct extensions', () => {
-    //   const {cert} = res;
-    //   const certPem = pki.certificateToPem(cert);
-    //   const resultCert = pki.certificateFromPem(certPem);
-    //   const expectedCert = fixtures.cert;
-    //   expect(map(resultCert.extensions, 'name').sort()).toEqual(map(expectedCert.extensions, 'name').sort());
-    //   expect(map(resultCert.extensions, 'id').sort()).toEqual(map(expectedCert.extensions, 'id').sort());
-    // });
+    it('should have correct extensions', () => {
+      const {cert} = res.cert;
+      const certPem = pki.certificateToPem(cert);
+      const resultCert = pki.certificateFromPem(certPem);
+      const expectedCert = fixtures.cert;
+      expect(getCertificateIssuer(resultCert)).toEqual(getCertificateSubject(res.ca.cert));
+      // expect(getCertificateIssuer(resultCert)).toEqual(getCertificateIssuer(expectedCert));
+      expect(getCertificateSubject(resultCert)).toEqual(getCertificateSubject(expectedCert));
+      expect(resultCert.serialNumber.length).toEqual(expectedCert.serialNumber.length);
+      // expect(map(resultCert.extensions, 'name').sort()).toEqual(map(expectedCert.extensions, 'name').sort());
+      // expect(map(resultCert.extensions, 'id').sort()).toEqual(map(expectedCert.extensions, 'id').sort());
+    });
     it('should have correct basicConstraints and keyUsage', () => {
-      const {cert} = res;
+      const {cert} = res.cert;
       const certPem = pki.certificateToPem(cert);
       const resultCert = pki.certificateFromPem(certPem);
       const expectedCert = fixtures.cert;
