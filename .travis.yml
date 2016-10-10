@@ -10,6 +10,7 @@ env:
 
 before_script:
   - date --rfc-2822
+  - openssl version
 
 script:
   - npm test
