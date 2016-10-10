@@ -4,12 +4,12 @@
 [![license](https://img.shields.io/github/license/mgcrea/node-easyrsa.svg?style=flat)](https://tldrlegal.com/license/mit-license) [![build status](http://img.shields.io/travis/mgcrea/node-easyrsa/master.svg?style=flat)](http://travis-ci.org/mgcrea/node-easyrsa) [![dependencies status](https://img.shields.io/david/mgcrea/node-easyrsa.svg?style=flat)](https://david-dm.org/mgcrea/node-easyrsa) [![devDependencies status](https://img.shields.io/david/dev/mgcrea/node-easyrsa.svg?style=flat)](https://david-dm.org/mgcrea/node-easyrsa#info=devDependencies) [![coverage status](http://img.shields.io/codeclimate/coverage/github/mgcrea/node-easyrsa.svg?style=flat)](https://codeclimate.com/github/mgcrea/node-easyrsa) [![climate status](https://img.shields.io/codeclimate/github/mgcrea/node-easyrsa.svg?style=flat)](https://codeclimate.com/github/mgcrea/node-easyrsa)
 [![npm downloads](https://img.shields.io/npm/dm/easyrsa.svg)](https://www.npmjs.com/package/easyrsa)
 
-Node.js implementation of the [EasyRSA](https://github.com/OpenVPN/easy-rsa) OpenVPN Public Key Infrastructure.
+Node.js public key infrastructure management library inspired by [EasyRSA](https://github.com/OpenVPN/easy-rsa).
 
 - Uses [forge](https://github.com/digitalbazaar/forge) to manage cryptography
-- Aims to be 100% ISO with the `easyrsa` bash script from [EasyRSA](https://github.com/OpenVPN/easy-rsa).
+- Provides ready-to-use templates to create your certificate authority: `vpn`, `ssl` or `mdm`.
 - Available both as a cli and a lib.
-- Databases backends on the TODO-list.
+- Can easily be plugged to a database backend.
 
 ## Quickstart
 
