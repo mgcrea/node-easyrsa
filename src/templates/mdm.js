@@ -17,6 +17,7 @@ export const buildCA = (cert, {commonName}) => {
     keyCertSign: true,
     cRLSign: true
   }, {
+    id: '2.5.29.32',
     name: 'certificatePolicies',
     value: `Reliance on this certificate by any party assumes acceptance of the
     then applicable standard terms and conditions of use, certificate policy and
