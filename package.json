@@ -59,6 +59,9 @@
     "ursa": "^0.9.4"
   },
   "jest": {
-    "testEnvironment": "node"
+    "testEnvironment": "node",
+    "setupFiles": [
+      "<rootDir>/test/setup/index.js"
+    ]
   }
 }
