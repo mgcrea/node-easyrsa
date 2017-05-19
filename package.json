@@ -1,6 +1,6 @@
 {
   "name": "easyrsa",
-  "version": "3.0.2",
+  "version": "3.0.3",
   "description": "EasyRSA public key infrastructure management",
   "main": "lib/index.js",
   "bin": {
