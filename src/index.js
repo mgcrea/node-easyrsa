@@ -183,10 +183,16 @@ export default class EasyRSA {
         ]);
       });
   }
-  createClient({commonName, attributes, privateKey: existingPrivateKey}) {
+  createClient({type, ...otherOpts}) {
+    return this.createCert({type: 'client', ...otherOpts});
+  }
+  createServer({type, ...otherOpts}) {
+    return this.createCert({type: 'server', ...otherOpts});
+  }
+  createCert({type = 'client', commonName, attributes, privateKey: existingPrivateKey}) {
     return this.genReq({commonName, attributes, privateKey: existingPrivateKey})
       .then(({privateKey, csr}) =>
-        this.signReq({commonName, attributes, type: 'client'})
+        this.signReq({commonName, attributes})
           .then(({cert, index, serial}) => ({
             cert,
             commonName,

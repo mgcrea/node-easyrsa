@@ -45,10 +45,9 @@ export const genReq = (csr, {commonName}) => {
 
 export const signReq = (cert, {type, commonName, ca}) => {
   switch (type) {
-    case 'client':
+    case 'server':
       cert.setExtensions([{
         name: 'basicConstraints',
-        // critical: true, // iPad
         cA: false
       }, {
         name: 'subjectKeyIdentifier'
@@ -59,16 +58,34 @@ export const signReq = (cert, {type, commonName, ca}) => {
         // serialNumber: this._ca.cert.serialNumber // not-iPad
       }, {
         name: 'extKeyUsage',
-        // critical: true, // iPad
-        // serverAuth: true, // iPad
+        serverAuth: true
+      }, {
+        name: 'keyUsage',
+        cRLSign: false,
+        keyCertSign: false,
+        digitalSignature: true,
+        keyEncipherment: true
+      }]);
+      break;
+    case 'client':
+      cert.setExtensions([{
+        name: 'basicConstraints',
+        cA: false
+      }, {
+        name: 'subjectKeyIdentifier'
+      }, {
+        name: 'authorityKeyIdentifier',
+        keyIdentifier: ca.cert.generateSubjectKeyIdentifier().getBytes()
+        // authorityCertIssuer: this._ca.cert.issuer, // not-iPad
+        // serialNumber: this._ca.cert.serialNumber // not-iPad
+      }, {
+        name: 'extKeyUsage',
         clientAuth: true
       }, {
         name: 'keyUsage',
         cRLSign: false,
         keyCertSign: false,
-        // critical: true, // iPad
         digitalSignature: true
-        // keyEncipherment: true // iPad
       }]);
       break;
     default:

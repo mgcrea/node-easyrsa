@@ -63,12 +63,13 @@ switch (argv._[0]) {
     pki.initPKI()
     .catch({code: 'EEXIST'}, (err) => {
       log.warn('You are about to remove the EASYRSA_PKI at: %s and initialize a fresh PKI here.', pki.dir);
-      return inquirer.promptAsync({name: 'confirm', message: 'Confirm removal', type: 'confirm', default: false}).catch(({confirm}) => {
-        if (!confirm) {
-          process.exit(1);
-        }
-        return pki.initPKI({force: true});
-      });
+      return inquirer.promptAsync({name: 'confirm', message: 'Confirm removal', type: 'confirm', default: false})
+        .catch(({confirm}) => {
+          if (!confirm) {
+            process.exit(1);
+          }
+          return pki.initPKI({force: true});
+        });
     })
     .then(() => {
       log.info('init-pki complete; you may now create a CA or requests.');
