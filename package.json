@@ -46,7 +46,6 @@
     "babel-preset-es2015": "^6.24.1",
     "babel-register": "^6.24.1",
     "codacy-coverage": "^2.0.2",
-    "codeclimate-test-reporter": "^0.4.1",
     "debug-utils": "^0.2.1",
     "eslint": "^3.19.0",
     "eslint-config-airbnb-base": "^11.2.0",
