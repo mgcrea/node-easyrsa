@@ -6,33 +6,33 @@ import Promise from 'bluebird';
 import {pki} from 'node-forge';
 import {map, groupBy} from 'lodash';
 
-import EasyRSA from './../src';
-import {assignTo, loadCertificateFromPemFile, getCertificateSubject, getCertificateIssuer} from './helpers';
+import EasyRSA from './../../src';
+import {assignTo, loadCertificateFromPemFile, getCertificateSubject, getCertificateIssuer} from './../helpers';
 
 Promise.promisifyAll(fs);
 
-describe('EasyRSA ~ mdm', () => {
+const rootDir = path.resolve(__dirname, '..', '..');
+const pkiDir = path.resolve(rootDir, '.tmp', 'ssl');
+
+describe('EasyRSA ~ ssl', () => {
   const res = {};
   const fixtures = {};
   const options = {
-    template: 'mdm',
-    pkiDir: path.resolve(__dirname, '.tmp', 'mdm')
+    template: 'ssl',
+    pkiDir
   };
-  before(() => Promise.all([
+  beforeAll(() => Promise.all([
     Promise.props({
-      ca: loadCertificateFromPemFile('fixtures/mdm/AppleIncRootCertificate.pem'),
-      chain: Promise.all([
-        loadCertificateFromPemFile('fixtures/mdm/Apple_iPhone_CA.pem'),
-        loadCertificateFromPemFile('fixtures/mdm/Apple_iPhone_Device_CA.pem')
-      ]),
-      cert: loadCertificateFromPemFile('fixtures/mdm/F567FC13-704D-47DE-9993-15C8EBB236AF.pem')
+      ca: loadCertificateFromPemFile('fixtures/ssl/DigiCert High Assurance EV Root CA.pem'),
+      chain: Promise.all([loadCertificateFromPemFile('fixtures/ssl/DigiCert SHA2 Extended Validation Server CA.pem')]),
+      cert: loadCertificateFromPemFile('fixtures/ssl/www.digitalocean.com.pem')
     }).then(assignTo(fixtures))
   ]));
   describe('#constructor()', () => {
     it('should properly merge options', () => {
       const easyrsa = new EasyRSA();
       expect(easyrsa.config).toBeA('object');
-      expect(easyrsa.config.pkiDir).toEqual(path.resolve(__dirname, '..', 'pki'));
+      expect(easyrsa.config.pkiDir).toEqual(path.resolve(rootDir, 'pki'));
     });
   });
   describe('#initPKI()', () => {
@@ -46,14 +46,14 @@ describe('EasyRSA ~ mdm', () => {
   });
   describe('#buildCA()', () => {
     const easyrsa = new EasyRSA(options);
-    const commonName = 'Apple Root CA';
+    const commonName = 'DigiCert High Assurance EV Root CA';
     const attributes = {
       countryName: 'US',
-      organizationName: 'Apple Inc.',
-      organizationalUnitName: 'Apple Certification Authority'
+      organizationName: 'DigiCert Inc',
+      organizationalUnitName: 'www.digicert.com'
     };
-    before(() => Promise.all([
-      easyrsa.buildCA({commonName, attributes, serialNumber: '02'}).then(assignTo(res, 'ca'))
+    beforeAll(() => Promise.all([
+      easyrsa.buildCA({commonName, attributes}).then(assignTo(res, 'ca'))
     ]));
     it('should properly return a privateKey and a cert', () => {
       const {privateKey, cert} = res.ca;
@@ -63,7 +63,7 @@ describe('EasyRSA ~ mdm', () => {
       const certPem = pki.certificateToPem(cert);
       expect(certPem).toBeA('string');
       expect(certPem).toMatch(/^-----BEGIN CERTIFICATE-----\r\n.+/);
-      expect(cert.serialNumber).toMatch(/[0-9a-f]{2}/);
+      expect(cert.serialNumber).toMatch(/[0-9a-f]{16}/);
       expect(getCertificateSubject(cert)).toEqual({commonName, ...attributes});
     });
     it('should have correct extensions', () => {
@@ -71,7 +71,6 @@ describe('EasyRSA ~ mdm', () => {
       const certPem = pki.certificateToPem(cert);
       const resultCert = pki.certificateFromPem(certPem);
       const expectedCert = fixtures.ca;
-      // expect(getSubjectFromAttrs(cert.issuer.attributes.attributes)).toEqual(getCertificateSubject(res.ca.cert));
       expect(getCertificateSubject(resultCert)).toEqual(getCertificateSubject(expectedCert));
       expect(resultCert.serialNumber.length).toEqual(expectedCert.serialNumber.length);
       expect(map(resultCert.extensions, 'name').sort()).toEqual(map(expectedCert.extensions, 'name').sort());
@@ -91,15 +90,14 @@ describe('EasyRSA ~ mdm', () => {
   });
   describe('#genReq()', () => {
     const easyrsa = new EasyRSA(options);
-    const commonName = 'F567FC13-704D-47DE-9993-15C8EBB236AF';
+    const commonName = 'www.digitalocean.com';
     const attributes = {
       countryName: 'US',
-      organizationName: 'Apple Inc.',
-      organizationalUnitName: 'iPhone',
-      localityName: 'Cupertino',
-      stateOrProvinceName: 'CA'
+      organizationName: 'DigitalOcean, LLC',
+      localityName: 'New York',
+      stateOrProvinceName: 'New York'
     };
-    before(() => Promise.all([
+    beforeAll(() => Promise.all([
       easyrsa.genReq({commonName, attributes}).then(assignTo(res, 'req'))
     ]));
     it('should properly return a privateKey and a csr', () => {
@@ -132,16 +130,15 @@ describe('EasyRSA ~ mdm', () => {
   });
   describe('#signReq()', () => {
     const easyrsa = new EasyRSA(options);
-    const commonName = 'F567FC13-704D-47DE-9993-15C8EBB236AF';
+    const commonName = 'www.digitalocean.com';
     const attributes = {
       countryName: 'US',
-      organizationName: 'Apple Inc.',
-      organizationalUnitName: 'iPhone',
-      localityName: 'Cupertino',
-      stateOrProvinceName: 'CA'
+      organizationName: 'DigitalOcean, LLC',
+      localityName: 'New York',
+      stateOrProvinceName: 'New York'
     };
-    before(() => Promise.all([
-      easyrsa.signReq({commonName, attributes, type: 'client', serialNumberBytes: 10}).then(assignTo(res, 'cert'))
+    beforeAll(() => Promise.all([
+      easyrsa.signReq({commonName, attributes, type: 'client'}).then(assignTo(res, 'cert'))
     ]));
     it('should properly return a cert and a serial', () => {
       const {cert, serial} = res.cert;
@@ -150,7 +147,7 @@ describe('EasyRSA ~ mdm', () => {
       expect(certPem).toMatch(/^-----BEGIN CERTIFICATE-----\r\n.+/);
       expect(serial).toBeA('string');
       expect(serial).toMatch(/[\da-f]/i);
-      expect(cert.serialNumber).toMatch(/[0-9a-f]{10}/);
+      expect(cert.serialNumber).toMatch(/[0-9a-f]{16}/);
       expect(getCertificateSubject(cert)).toEqual({commonName, ...attributes});
     });
     it('should have correct extensions', () => {
@@ -162,8 +159,8 @@ describe('EasyRSA ~ mdm', () => {
       // expect(getCertificateIssuer(resultCert)).toEqual(getCertificateIssuer(expectedCert)); // @TODO chain
       expect(getCertificateSubject(resultCert)).toEqual(getCertificateSubject(expectedCert));
       expect(resultCert.serialNumber.length).toEqual(expectedCert.serialNumber.length);
-      expect(map(resultCert.extensions, 'name').sort()).toEqual(map(expectedCert.extensions, 'name').sort());
-      expect(map(resultCert.extensions, 'id').sort()).toEqual(map(expectedCert.extensions, 'id').sort());
+      // expect(map(resultCert.extensions, 'name').sort()).toEqual(map(expectedCert.extensions, 'name').sort());
+      // expect(map(resultCert.extensions, 'id').sort()).toEqual(map(expectedCert.extensions, 'id').sort());
     });
     it('should have correct basicConstraints and keyUsage', () => {
       const {cert} = res.cert;
@@ -175,7 +172,7 @@ describe('EasyRSA ~ mdm', () => {
       const expectedExtensions = groupBy(expectedCert.extensions, 'name');
       expect(extensions.basicConstraints).toEqual(expectedExtensions.basicConstraints);
       expect(extensions.keyUsage).toEqual(expectedExtensions.keyUsage);
-      expect(extensions.extKeyUsage).toEqual(expectedExtensions.extKeyUsage);
+      // expect(extensions.extKeyUsage).toEqual(expectedExtensions.extKeyUsage);
     });
   });
 });

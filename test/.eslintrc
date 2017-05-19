@@ -2,7 +2,7 @@
   "extends": "./../.eslintrc",
   "parser": "babel-eslint",
   "env": {
-    "mocha": true
+    "jest": true
   },
   "rules": {
     "func-names": "off",
