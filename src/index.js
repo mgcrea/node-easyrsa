@@ -106,10 +106,19 @@ export default class EasyRSA {
       ]));
   }
   // watch -n.75 'openssl req -in pki/reqs/EntityName.req -text -noout'
-  genReq({commonName = 'Easy-RSA CA', attributes}) {
+  genReq({commonName = 'Easy-RSA CA', attributes, privateKey: existingPrivateKey}) {
     const cfg = this.config;
     return this.verifyPKI()
-      .then(() => generateFastKeyPair(cfg.keysize))
+      .then(() => {
+        if (existingPrivateKey) {
+          const privateKey = pki.privateKeyFromPem(existingPrivateKey.toString());
+          return {
+            privateKey,
+            publicKey: pki.rsa.setPublicKey(privateKey.n, privateKey.e)
+          };
+        }
+        return generateFastKeyPair(cfg.keysize);
+      })
       .then(({privateKey, publicKey}) => {
         const csr = pki.createCertificationRequest();
         csr.publicKey = publicKey;

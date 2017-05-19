@@ -117,6 +117,14 @@ describe.only('EasyRSA ~ vpn', () => {
       expect(extensions.basicConstraints).toEqual(expectedExtensions.basicConstraints);
       expect(extensions.keyUsage).toEqual(expectedExtensions.keyUsage);
     });
+    it('should support an existing privateKey', () => {
+      const {privateKey: existingPrivateKey} = res.req;
+      const existingPrivateKeyPem = pki.privateKeyToPem(existingPrivateKey);
+      return easyrsa.genReq({commonName, attributes, privateKey: existingPrivateKeyPem})
+        .then(({privateKey}) => {
+          expect(pki.privateKeyToPem(privateKey)).toEqual(pki.privateKeyToPem(existingPrivateKey));
+        });
+    });
   });
   describe('#signReq()', () => {
     const easyrsa = new EasyRSA(options);
