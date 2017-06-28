@@ -57,17 +57,17 @@ export default class EasyRSA {
         fs.mkdirAsync(path.join(dir, 'reqs'))
       ]));
     return setupFolders(this.dir)
-    // @TODO fix catch
-    .catch({code: 'EEXIST'}, (err) => {
-      if (!force) {
-        throw err;
-      }
-      return del(this.dir).then(() => setupFolders(this.dir));
-    })
-    // .catch(err => {
-    //   d(err.name, err.code);
-    // })
-    .return(this.dir);
+      // @TODO fix catch
+      .catch({code: 'EEXIST'}, (err) => {
+        if (!force) {
+          throw err;
+        }
+        return del(this.dir).then(() => setupFolders(this.dir));
+      })
+      // .catch(err => {
+      //   d(err.name, err.code);
+      // })
+      .return(this.dir);
   }
   // https://github.com/OpenVPN/easy-rsa/blob/master/easyrsa3/easyrsa#L408
   // watch -n.75 'openssl x509 -in pki/ca.crt -text -noout'
@@ -147,7 +147,7 @@ export default class EasyRSA {
         index: fs.readFileAsync(path.join(this.dir, 'index.txt')).call('toString'),
         serial: fs.readFileAsync(path.join(this.dir, 'serial')).call('toString'),
         csr: fs.readFileAsync(path.join(this.dir, 'reqs', `${commonName}.req`))
-               .then(forge.pki.certificationRequestFromPem)
+          .then(forge.pki.certificationRequestFromPem)
       }))
       .then(({csr, index, serial}) => {
         if (!csr.verify()) {
@@ -168,19 +168,21 @@ export default class EasyRSA {
         }
         cert.setIssuer(this.ca.cert.subject.attributes);
         cert.sign(this.ca.privateKey, md.sha256.create());
-        return {cert, serial, commonName};
-      })
-      .tap(({cert, index, serial}) => {
-        const updatedSerial = (parseInt(serial, 16) + 1).toString(16);
-        const certPem = pki.certificateToPem(cert);
-        const indexKey = cert.tbsCertificate.value[4].value[1].value;
-        const indexContent = `${index ? `${index}\n` : ''}V ${indexKey}    ${cert.serialNumber}  unknown /CN=${commonName}`;
-        return Promise.all([
-          fs.writeFileAsync(path.join(this.dir, 'index.txt'), indexContent),
-          fs.writeFileAsync(path.join(this.dir, 'certs_by_serial', `${serial}.pem`), certPem),
-          fs.writeFileAsync(path.join(this.dir, 'issued', `${commonName}.crt`), certPem),
-          fs.writeFileAsync(path.join(this.dir, 'serial'), updatedSerial.length % 2 ? `0${updatedSerial}` : updatedSerial)
-        ]);
+        return Promise.resolve({cert, serial, commonName})
+          .tap(() => {
+            const updatedSerial = (parseInt(serial, 16) + 1).toString(16);
+            const certPem = pki.certificateToPem(cert);
+            const indexKey = cert.tbsCertificate.value[4].value[1].value;
+            // eslint-disable-next-line
+            // V	250616102916Z		01	unknown	/C=FR/ST=Ile-de-France/L=Paris/O=Carlipa/OU=carlipa-online.com/CN=server@prod/emailAddress=admin@carlipa-online.com
+            const indexContent = `${index ? `${index}\n` : ''}V ${indexKey}    ${cert.serialNumber}  unknown /CN=${commonName}`;
+            return Promise.all([
+              fs.writeFileAsync(path.join(this.dir, 'index.txt'), indexContent),
+              fs.writeFileAsync(path.join(this.dir, 'certs_by_serial', `${serial}.pem`), certPem),
+              fs.writeFileAsync(path.join(this.dir, 'issued', `${commonName}.crt`), certPem),
+              fs.writeFileAsync(path.join(this.dir, 'serial'), updatedSerial.length % 2 ? `0${updatedSerial}` : updatedSerial)
+            ]);
+          });
       });
   }
   createClient({type, ...otherOpts}) {
