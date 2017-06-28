@@ -89,7 +89,9 @@ describe.only('EasyRSA ~ vpn', () => {
     const commonName = 'server@foo.bar.com';
     describe('#genReq()', () => {
       const easyrsa = new EasyRSA(options);
-      const attributes = {};
+      const attributes = {
+        countryName: 'France'
+      };
       beforeAll(() => Promise.all([
         easyrsa.genReq({commonName, attributes}).then(assignTo(res, 'req'))
       ]));
