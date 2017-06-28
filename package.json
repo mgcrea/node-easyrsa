@@ -8,7 +8,7 @@
   },
   "scripts": {
     "start": "npm run test:watch",
-    "test": "NODE_ENV=test jest",
+    "test": "NODE_ENV=test jest --runInBand",
     "test:watch": "npm run test -- --watch",
     "test:coverage": "npm run test -- --coverage",
     "lint": "NODE_ENV=test eslint src/",
@@ -26,20 +26,20 @@
     "bluebird": "^3.5.0",
     "chalk": "^1.1.3",
     "core-error-predicates": "^1.1.0",
-    "del": "^2.2.2",
-    "inquirer": "^3.0.6",
+    "del": "^3.0.0",
+    "inquirer": "^3.1.1",
     "lodash": "^4.17.4",
     "mkdirp": "^0.5.1",
     "moment": "^2.18.1",
     "node-forge": "^0.7.1",
     "source-map-support": "^0.4.15",
     "tildify": "^1.2.0",
-    "yargs": "^8.0.1"
+    "yargs": "^8.0.2"
   },
   "devDependencies": {
     "babel-cli": "^6.24.1",
     "babel-eslint": "^7.2.3",
-    "babel-plugin-istanbul": "^4.1.3",
+    "babel-plugin-istanbul": "^4.1.4",
     "babel-plugin-transform-class-properties": "^6.24.1",
     "babel-plugin-transform-function-bind": "^6.22.0",
     "babel-plugin-transform-object-rest-spread": "^6.23.0",
@@ -47,11 +47,11 @@
     "babel-register": "^6.24.1",
     "codacy-coverage": "^2.0.2",
     "debug-utils": "^0.2.1",
-    "eslint": "^3.19.0",
+    "eslint": "^4.1.1",
     "eslint-config-airbnb-base": "^11.2.0",
-    "eslint-plugin-import": "^2.2.0",
+    "eslint-plugin-import": "^2.6.0",
     "expect": "^1.20.2",
-    "jest": "^20.0.3",
+    "jest": "^20.0.4",
     "rimraf": "^2.6.1"
   },
   "optionalDependencies": {
