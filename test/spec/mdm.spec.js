@@ -13,7 +13,7 @@ Promise.promisifyAll(fs);
 
 const rootDir = path.resolve(__dirname, '..', '..');
 const pkiDir = path.resolve(rootDir, '.tmp', 'mdm');
-jasmine.DEFAULT_TIMEOUT_INTERVAL = 20000;
+jasmine.DEFAULT_TIMEOUT_INTERVAL = 30000;
 
 describe('EasyRSA ~ mdm', () => {
   const res = {};
