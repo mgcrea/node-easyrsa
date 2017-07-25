@@ -19,6 +19,8 @@ const mkdirpAsync = Promise.promisify(mkdirp);
 const cwd = process.cwd();
 const noop = () => {};
 
+export {pki, md};
+
 export default class EasyRSA {
   static defaults = {
     pkiDir: path.join(cwd, 'pki'),
@@ -71,7 +73,7 @@ export default class EasyRSA {
   }
   // https://github.com/OpenVPN/easy-rsa/blob/master/easyrsa3/easyrsa#L408
   // watch -n.75 'openssl x509 -in pki/ca.crt -text -noout'
-  buildCA({commonName = 'Easy-RSA CA', attributes, serialNumber, serialNumberBytes = 16} = {}) {
+  buildCA({commonName = 'Easy-RSA CA', attributes, serialNumber, serialNumberBytes = 16, privateKey: existingPrivateKey} = {}) {
     const cfg = this.config;
     const setupFolders = dir => Promise.all([
       fs.mkdirAsync(path.join(dir, 'issued')).catch((err) => {}),
@@ -79,7 +81,16 @@ export default class EasyRSA {
     ]);
     return this.verifyPKI()
       .then(() => setupFolders(this.dir).catch(noop))
-      .then(() => generateFastKeyPair(cfg.keysize))
+      .then(() => {
+        if (existingPrivateKey) {
+          const privateKey = pki.privateKeyFromPem(existingPrivateKey.toString());
+          return {
+            privateKey,
+            publicKey: pki.rsa.setPublicKey(privateKey.n, privateKey.e)
+          };
+        }
+        return generateFastKeyPair(cfg.keysize);
+      })
       .then(({privateKey, publicKey}) => {
         const cert = pki.createCertificate();
         cert.publicKey = publicKey;
