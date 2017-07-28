@@ -15,7 +15,7 @@ Promise.promisifyAll(fs);
 
 const rootDir = path.resolve(__dirname, '..', '..');
 const pkiDir = path.resolve(rootDir, '.tmp', 'vpn');
-jasmine.DEFAULT_TIMEOUT_INTERVAL = 30000;
+jasmine.DEFAULT_TIMEOUT_INTERVAL = 60000;
 
 describe.only('EasyRSA ~ vpn', () => {
   const res = {};
