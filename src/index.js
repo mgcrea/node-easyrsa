@@ -205,7 +205,7 @@ export default class EasyRSA {
   createCert({type = 'client', commonName, attributes, privateKey: existingPrivateKey}) {
     return this.genReq({commonName, attributes, privateKey: existingPrivateKey})
       .then(({privateKey, csr}) =>
-        this.signReq({commonName, attributes})
+        this.signReq({commonName, attributes, type})
           .then(({cert, index, serial}) => ({
             cert,
             commonName,

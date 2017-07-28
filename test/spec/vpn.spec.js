@@ -190,6 +190,45 @@ describe.only('EasyRSA ~ vpn', () => {
         expect(extensions.extKeyUsage).toEqual(expectedExtensions.extKeyUsage);
       });
     });
+    describe('#createServer()', () => {
+      const easyrsa = new EasyRSA(options);
+      const attributes = {};
+      beforeAll(() => Promise.all([
+        easyrsa.createServer({commonName, attributes, serialNumberBytes: 16}).then(assignTo(res, 'cert'))
+      ]));
+      it('should properly return a cert and a serial', () => {
+        const {cert, serial} = res.cert;
+        const certPem = pki.certificateToPem(cert);
+        expect(certPem).toBeA('string');
+        expect(certPem).toMatch(/^-----BEGIN CERTIFICATE-----\r\n.+/);
+        expect(serial).toBeA('string');
+        expect(serial).toMatch(/[\da-f]/i);
+        expect(cert.serialNumber).toMatch(/[0-9a-f]{16}/);
+      });
+      it('should have correct extensions', () => {
+        const {cert} = res.cert;
+        const certPem = pki.certificateToPem(cert);
+        const resultCert = pki.certificateFromPem(certPem);
+        const expectedCert = fixtures.serverCert;
+        expect(getCertificateIssuer(resultCert)).toEqual(getCertificateSubject(res.ca.cert));
+        expect(getCertificateIssuer(resultCert)).toEqual(getCertificateIssuer(expectedCert));
+        expect(getCertificateSubject(resultCert)).toEqual(getCertificateSubject(expectedCert));
+        expect(resultCert.serialNumber.length).toEqual(expectedCert.serialNumber.length);
+        expect(map(resultCert.extensions, 'name').sort()).toEqual(map(expectedCert.extensions, 'name').sort());
+        expect(map(resultCert.extensions, 'id').sort()).toEqual(map(expectedCert.extensions, 'id').sort());
+      });
+      it('should have correct basicConstraints and keyUsage', () => {
+        const {cert} = res.cert;
+        const certPem = pki.certificateToPem(cert);
+        const resultCert = pki.certificateFromPem(certPem);
+        const expectedCert = fixtures.serverCert;
+        const extensions = groupBy(resultCert.extensions, 'name');
+        const expectedExtensions = groupBy(expectedCert.extensions, 'name');
+        expect(extensions.basicConstraints).toEqual(expectedExtensions.basicConstraints);
+        expect(extensions.keyUsage).toEqual(expectedExtensions.keyUsage);
+        expect(extensions.extKeyUsage).toEqual(expectedExtensions.extKeyUsage);
+      });
+    });
   });
   describe('client', () => {
     const commonName = 'baz@foo.bar.com';
