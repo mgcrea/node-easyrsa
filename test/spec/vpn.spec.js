@@ -1,4 +1,3 @@
-import 'debug-utils';
 import fs from 'fs';
 import path from 'path';
 import expect from 'expect';

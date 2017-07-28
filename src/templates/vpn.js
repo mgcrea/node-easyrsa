@@ -53,9 +53,9 @@ export const signReq = (cert, {type, commonName, ca}) => {
         name: 'subjectKeyIdentifier'
       }, {
         name: 'authorityKeyIdentifier',
-        keyIdentifier: ca.cert.generateSubjectKeyIdentifier().getBytes()
-        // authorityCertIssuer: this._ca.cert.issuer, // not-iPad
-        // serialNumber: this._ca.cert.serialNumber // not-iPad
+        keyIdentifier: ca.cert.generateSubjectKeyIdentifier().getBytes(),
+        authorityCertIssuer: ca.cert.issuer,
+        serialNumber: ca.cert.serialNumber
       }, {
         name: 'extKeyUsage',
         serverAuth: true
@@ -75,9 +75,9 @@ export const signReq = (cert, {type, commonName, ca}) => {
         name: 'subjectKeyIdentifier'
       }, {
         name: 'authorityKeyIdentifier',
-        keyIdentifier: ca.cert.generateSubjectKeyIdentifier().getBytes()
-        // authorityCertIssuer: this._ca.cert.issuer, // not-iPad
-        // serialNumber: this._ca.cert.serialNumber // not-iPad
+        keyIdentifier: ca.cert.generateSubjectKeyIdentifier().getBytes(),
+        authorityCertIssuer: ca.cert.issuer,
+        serialNumber: ca.cert.serialNumber
       }, {
         name: 'extKeyUsage',
         clientAuth: true

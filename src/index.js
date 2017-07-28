@@ -101,11 +101,11 @@ export default class EasyRSA {
         // Apply subject attributes
         const subject = buildSubjectFromOptions({commonName, attributes});
         cert.setSubject(subject);
+        cert.setIssuer(subject);
         // Apply template to certificate
         if (templates[cfg.template].buildCA) {
           templates[cfg.template].buildCA(cert, {commonName});
         }
-        cert.setIssuer(subject);
         cert.sign(privateKey, md.sha256.create());
         return {privateKey, cert};
       })
@@ -173,11 +173,11 @@ export default class EasyRSA {
         // Apply subject attributes
         const subject = buildSubjectFromOptions({commonName, attributes});
         cert.setSubject(subject);
+        cert.setIssuer(this.ca.cert.subject.attributes);
         // Apply template to certificate
         if (templates[cfg.template].signReq) {
           templates[cfg.template].signReq(cert, {subject, type, ca: this.ca});
         }
-        cert.setIssuer(this.ca.cert.subject.attributes);
         cert.sign(this.ca.privateKey, md.sha256.create());
         return Promise.resolve({cert, serial, commonName})
           .tap(() => {
