@@ -105,7 +105,7 @@ export default class EasyRSA {
         if (templates[cfg.template].buildCA) {
           templates[cfg.template].buildCA(cert, {commonName});
         }
-        cert.setIssuer(cert.subject);
+        cert.setIssuer(subject);
         cert.sign(privateKey, md.sha256.create());
         return {privateKey, cert};
       })
@@ -234,11 +234,10 @@ function buildSubjectFromOptions({commonName, attributes}) {
 function generateFastKeyPair(bits = 2048, exponent = 65537) {
   try {
     const keyPair = require('ursa').generatePrivateKey(bits, exponent); // eslint-disable-line global-require
-
-    return {
+    return Promise.resolve({
       privateKey: pki.privateKeyFromPem(keyPair.toPrivatePem().toString()),
       publicKey: pki.publicKeyFromPem(keyPair.toPublicPem().toString())
-    };
+    });
   } catch (err) {
     return pki.rsa.generateKeyPairAsync({bits, workers: -1});
   }

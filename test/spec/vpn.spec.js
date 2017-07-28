@@ -52,7 +52,8 @@ describe.only('EasyRSA ~ vpn', () => {
   describe('#buildCA()', () => {
     const easyrsa = new EasyRSA(options);
     beforeAll(() => Promise.all([
-      easyrsa.buildCA({serialNumberBytes: 9}).then(assignTo(res, 'ca'))
+      easyrsa.buildCA({serialNumberBytes: 9})
+        .tap(assignTo(res, 'ca'))
     ]));
     it('should properly return a privateKey and a cert', () => {
       const {privateKey, cert} = res.ca;
@@ -83,6 +84,24 @@ describe.only('EasyRSA ~ vpn', () => {
       const expectedExtensions = groupBy(expectedCert.extensions, 'name');
       expect(extensions.basicConstraints).toEqual(expectedExtensions.basicConstraints);
       expect(extensions.keyUsage).toEqual(expectedExtensions.keyUsage);
+    });
+    it('should properly verify', () => {
+      const {cert} = res.ca;
+      const caStore = pki.createCaStore();
+      caStore.addCertificate(cert);
+      return new Promise((resolve, reject) => {
+        try {
+          pki.verifyCertificateChain(caStore, [cert], (vfd, depth, chain) => {
+            if (vfd === true) {
+              resolve();
+            } else {
+              reject();
+            }
+          });
+        } catch (err) {
+          reject(err);
+        }
+      });
     });
   });
   describe('server', () => {
