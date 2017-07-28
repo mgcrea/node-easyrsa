@@ -155,6 +155,7 @@ describe('EasyRSA ~ mdm', () => {
       expect(serial).toBeA('string');
       expect(serial).toMatch(/[\da-f]/i);
       expect(cert.serialNumber).toMatch(/[0-9a-f]{10}/);
+      expect(parseInt(cert.serialNumber, 16) > 0).toBeTruthy();
       expect(getCertificateSubject(cert)).toEqual({commonName, ...attributes});
     });
     it('should have correct extensions', () => {
@@ -165,7 +166,7 @@ describe('EasyRSA ~ mdm', () => {
       expect(getCertificateIssuer(resultCert)).toEqual(getCertificateSubject(res.ca.cert));
       // expect(getCertificateIssuer(resultCert)).toEqual(getCertificateIssuer(expectedCert)); // @TODO chain
       expect(getCertificateSubject(resultCert)).toEqual(getCertificateSubject(expectedCert));
-      expect(resultCert.serialNumber.length).toEqual(expectedCert.serialNumber.length);
+      expect(parseInt(resultCert.serialNumber, 16).length).toEqual(parseInt(expectedCert.serialNumber, 16).length);
       expect(map(resultCert.extensions, 'name').sort()).toEqual(map(expectedCert.extensions, 'name').sort());
       expect(map(resultCert.extensions, 'id').sort()).toEqual(map(expectedCert.extensions, 'id').sort());
     });

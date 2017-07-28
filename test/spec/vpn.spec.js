@@ -20,6 +20,7 @@ jasmine.DEFAULT_TIMEOUT_INTERVAL = 60000;
 describe.only('EasyRSA ~ vpn', () => {
   const res = {};
   const fixtures = {};
+  const caStore = pki.createCaStore();
   const options = {
     pkiDir
   };
@@ -54,6 +55,9 @@ describe.only('EasyRSA ~ vpn', () => {
     beforeAll(() => Promise.all([
       easyrsa.buildCA({serialNumberBytes: 9})
         .tap(assignTo(res, 'ca'))
+        .tap(({cert}) => {
+          caStore.addCertificate(cert);
+        })
     ]));
     it('should properly return a privateKey and a cert', () => {
       const {privateKey, cert} = res.ca;
@@ -85,10 +89,8 @@ describe.only('EasyRSA ~ vpn', () => {
       expect(extensions.basicConstraints).toEqual(expectedExtensions.basicConstraints);
       expect(extensions.keyUsage).toEqual(expectedExtensions.keyUsage);
     });
-    it('should properly verify', () => {
+    it('should properly self-verify', () => {
       const {cert} = res.ca;
-      const caStore = pki.createCaStore();
-      caStore.addCertificate(cert);
       return new Promise((resolve, reject) => {
         try {
           pki.verifyCertificateChain(caStore, [cert], (vfd, depth, chain) => {
@@ -238,7 +240,7 @@ describe.only('EasyRSA ~ vpn', () => {
       const easyrsa = new EasyRSA(options);
       const attributes = {};
       beforeAll(() => Promise.all([
-        easyrsa.signReq({commonName, attributes, type: 'client', serialNumberBytes: 17}).then(assignTo(res, 'cert'))
+        easyrsa.signReq({commonName, attributes, type: 'client'}).then(assignTo(res, 'cert'))
       ]));
       it('should properly return a cert and a serial', () => {
         const {cert, serial} = res.cert;
@@ -248,6 +250,7 @@ describe.only('EasyRSA ~ vpn', () => {
         expect(serial).toBeA('string');
         expect(serial).toMatch(/[\da-f]/i);
         expect(cert.serialNumber).toMatch(/[0-9a-f]{16}/);
+        expect(parseInt(cert.serialNumber, 16) > 0).toBeTruthy();
       });
       it('should have correct extensions', () => {
         const {cert} = res.cert;
@@ -257,7 +260,7 @@ describe.only('EasyRSA ~ vpn', () => {
         expect(getCertificateIssuer(resultCert)).toEqual(getCertificateSubject(res.ca.cert));
         expect(getCertificateIssuer(resultCert)).toEqual(getCertificateIssuer(expectedCert));
         expect(getCertificateSubject(resultCert)).toEqual(getCertificateSubject(expectedCert));
-        expect(resultCert.serialNumber.length).toEqual(expectedCert.serialNumber.length);
+        expect(parseInt(resultCert.serialNumber, 16).length).toEqual(parseInt(expectedCert.serialNumber, 16).length);
         expect(map(resultCert.extensions, 'name').sort()).toEqual(map(expectedCert.extensions, 'name').sort());
         expect(map(resultCert.extensions, 'id').sort()).toEqual(map(expectedCert.extensions, 'id').sort());
       });
@@ -271,6 +274,22 @@ describe.only('EasyRSA ~ vpn', () => {
         expect(extensions.basicConstraints).toEqual(expectedExtensions.basicConstraints);
         expect(extensions.keyUsage).toEqual(expectedExtensions.keyUsage);
         expect(extensions.extKeyUsage).toEqual(expectedExtensions.extKeyUsage);
+      });
+      it('should properly verify', () => {
+        const {cert} = res.cert;
+        return new Promise((resolve, reject) => {
+          try {
+            pki.verifyCertificateChain(caStore, [cert], (vfd, depth, chain) => {
+              if (vfd === true) {
+                resolve();
+              } else {
+                reject();
+              }
+            });
+          } catch (err) {
+            reject(err);
+          }
+        });
       });
     });
   });
