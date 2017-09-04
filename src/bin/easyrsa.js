@@ -1,4 +1,5 @@
 #!/usr/bin/env node
+/* eslint-disable prefer-destructuring */
 
 import 'source-map-support/register';
 import {mapKeys, camelCase} from 'lodash';

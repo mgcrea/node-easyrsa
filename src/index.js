@@ -213,8 +213,7 @@ export default class EasyRSA {
             index,
             privateKey,
             serial
-          }))
-      );
+          })));
   }
 }
 

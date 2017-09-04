@@ -31,7 +31,7 @@ describe('EasyRSA ~ ssl', () => {
   describe('#constructor()', () => {
     it('should properly merge options', () => {
       const easyrsa = new EasyRSA();
-      expect(easyrsa.config).toBeA('object');
+      expect(typeof easyrsa.config).toBe('object');
       expect(easyrsa.config.pkiDir).toEqual(path.resolve(rootDir, 'pki'));
     });
   });
@@ -58,10 +58,10 @@ describe('EasyRSA ~ ssl', () => {
     it('should properly return a privateKey and a cert', () => {
       const {privateKey, cert} = res.ca;
       const privateKeyPem = pki.privateKeyToPem(privateKey);
-      expect(privateKeyPem).toBeA('string');
+      expect(typeof privateKeyPem).toBe('string');
       expect(privateKeyPem).toMatch(/^-----BEGIN RSA PRIVATE KEY-----\r\n.+/);
       const certPem = pki.certificateToPem(cert);
-      expect(certPem).toBeA('string');
+      expect(typeof certPem).toBe('string');
       expect(certPem).toMatch(/^-----BEGIN CERTIFICATE-----\r\n.+/);
       expect(cert.serialNumber).toMatch(/[0-9a-f]{16}/);
       expect(getCertificateSubject(cert)).toEqual({commonName, ...attributes});
@@ -103,10 +103,10 @@ describe('EasyRSA ~ ssl', () => {
     it('should properly return a privateKey and a csr', () => {
       const {privateKey, csr} = res.req;
       const privateKeyPem = pki.privateKeyToPem(privateKey);
-      expect(privateKeyPem).toBeA('string');
+      expect(typeof privateKeyPem).toBe('string');
       expect(privateKeyPem).toMatch(/^-----BEGIN RSA PRIVATE KEY-----\r\n.+/);
       const csrPem = pki.certificationRequestToPem(csr);
-      expect(csrPem).toBeA('string');
+      expect(typeof csrPem).toBe('string');
       expect(csrPem).toMatch(/^-----BEGIN CERTIFICATE REQUEST-----\r\n.+/);
     });
     // it('should have correct extensions', () => {
@@ -143,9 +143,9 @@ describe('EasyRSA ~ ssl', () => {
     it('should properly return a cert and a serial', () => {
       const {cert, serial} = res.cert;
       const certPem = pki.certificateToPem(cert);
-      expect(certPem).toBeA('string');
+      expect(typeof certPem).toBe('string');
       expect(certPem).toMatch(/^-----BEGIN CERTIFICATE-----\r\n.+/);
-      expect(serial).toBeA('string');
+      expect(typeof serial).toBe('string');
       expect(serial).toMatch(/[\da-f]/i);
       expect(cert.serialNumber).toMatch(/[0-9a-f]{16}/);
       expect(parseInt(cert.serialNumber, 16) > 0).toBeTruthy();
