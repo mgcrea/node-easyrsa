@@ -26,6 +26,7 @@ Node.js public key infrastructure management library inspired by [EasyRSA](https
 ```bash
 npm i -g easyrsa
 easyrsa init-pki
+easyrsa build-ca
 easyrsa gen-req EntityName
 easyrsa sign-req client EntityName
 ```
