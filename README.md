@@ -19,6 +19,8 @@ Node.js public key infrastructure management library inspired by [EasyRSA](https
 
 ## Quickstart
 
+### VPN Server setup
+
 - Command Line Interface
 
 ```bash
@@ -26,6 +28,61 @@ npm i -g easyrsa
 easyrsa init-pki
 easyrsa gen-req EntityName
 easyrsa sign-req client EntityName
+```
+
+- Node.js usage 
+
+```js
+import EasyRSA from 'easyrsa';
+
+const easyrsa = new EasyRSA({pkiDir});
+
+const pkiAttributes = {
+  organizationalUnitName: 'foo.online',
+  organizationName: 'Foo',
+  localityName: 'Paris',
+  stateOrProvinceName: 'Ile-de-France',
+  countryName: 'France'
+}
+
+// Build an OpenVPN infrastructure
+easyrsa.initPKI()
+  .then(() => {
+    const commonName = `ca@${myHost}`;
+    const attributes = {
+      ...pkiAttributes
+    };
+    log.warn('Building new CA ...');
+    return easyrsa.buildCA({commonName, attributes, serialNumberBytes: 9, privateKey: ca.privateKey})
+      .then(({privateKey, cert}) => {
+        log.info('Built new CA with serialNumber="%s"', cert.serialNumber);
+      });
+  })
+  .then(() => {
+    const commonName = `server@${myHost}`;
+    const attributes = {
+      ...pkiAttributes,
+      unstructuredName: 'OpenVPN Service'
+    };
+    log.info('Generating new server certificate with commonName="%s" ...', commonName);
+    return easyrsa.createServer({commonName, attributes, privateKey: vpn.privateKey})
+      .then(({privateKey, csr, cert, serial, index}) => {
+        log.info('Built new certificate for commonName="%s" with serialNumber="%s"', commonName, cert.serialNumber);
+      });
+  })
+  .then(() => {
+  	const commonName = 'client@${myHost}'
+	const {pkiAttributes} = this.config;
+    const attributes = {
+      ...pkiAttributes,
+      unstructuredName: 'My first Client'
+    };
+    log.info('Generating new %s client for commonName="%s" ...', type, commonName);
+    return easyrsa.createClient({commonName, attributes, privateKey})
+      .then(({csr, cert, serial, index}) => {
+        log.info('Built new client certificate with commonName="%s" with serialNumber="%s"', commonName, cert.serialNumber);
+      });
+  })
 ```
 
 ## Testing
